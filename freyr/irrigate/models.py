@@ -42,10 +42,49 @@ class Actuator(models.Model):
 
 class ActuatorCollection(models.Model):
     name = models.CharField(max_length=255, help_text='A name to help identify which collection this is')
-    actuators = models.ManyToManyField(Actuator, related_name='collections'
+    actuators = models.ManyToManyField(Actuator, related_name='collections')
 
+class ScheduleTime(models.Model):
+
+    class Weekday(models.IntegerChoices):
+        MONDAY = 0
+        TUESDAY = 1
+        WEDNESDAY = 2
+        THURSDAY = 3
+        FRIDAY = 4
+        SATURDAY = 5
+        SUNDAY = 6
+
+    start_time = models.TimeField(required=True)
+    day = models.IntegerField(max_length=1, choices=Weekday.choices, required=True)
+    collection = models.ForeignKey(ActuatorCollection, on_delete=models.CASCADE)
+    duration_in_minutes = models.PositiveIntegerField(required=True)
+
+    def should_run(self, actuator: Actuator):
+        # TODO move to separate scheduler module
+        now = datetime.now()
+        current_weekday = now.weekday()
+        current_time = now.time()
+        if self.day != current_weekday:
+            return False
+
+        if current_time > self.start_time:
+            # TODO check if there is an existing run before returning
+
+        return False
+
+    def run(self):
+        for actuator in self.collection.actuators.all():
+            if self.should_run(actuator):
+                actuator.start()
+                time.sleep(self.duration_in_minutes * 60)
 
 class ActuatorRun(models.Model):
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(required=True)
     end_time = models.DateTimeField()
+
+    def status(self):
+        if not self.end_time:
+            return 'running'
+        return 'finished'
