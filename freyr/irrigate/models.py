@@ -1,4 +1,5 @@
 from django.db import models
+from irrigate.gpio import GPIO
 
 
 # Create your models here.
@@ -12,14 +13,18 @@ class Actuator(models.Model):
     name = models.CharField(max_length=255)
     gpio_pin = models.SmallIntegerField()
 
+    @property
+    def gpio(self):
+        return GPIO(self.gpio_pin)
+
     def start(self):
         """
         Start the actuator
         """
-        pass
+        self.gpio.start()
 
     def stop(self):
         """
         Stop the actuator
         """
-        pass
+        self.gpio.stop()
