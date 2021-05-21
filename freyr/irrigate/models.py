@@ -1,8 +1,16 @@
 from datetime import datetime
+from typing import Optional
 
 from django.db import models, transaction
+from django.db.models import Q
 from irrigate.gpio import GPIO
 
+
+class Device(models.Model):
+    name = models.CharField(max_length=255, help_text='Unique ID for a given device (e.g. garage pi, garden pi)')
+
+    def __str__(self):
+        return self.name
 
 # Create your models here.
 class Actuator(models.Model):
@@ -14,30 +22,30 @@ class Actuator(models.Model):
     """
     name = models.CharField(max_length=255, help_text='A name to help identify which actuator this is')
     gpio_pin = models.SmallIntegerField(help_text='GPIO pin on the raspberry pi')
-    device = models.CharField(max_length=255, help_text='Unique ID for a given device (e.g. garage pi, garden pi)')
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
 
     @property
     def gpio(self):
         return GPIO(self.gpio_pin)
 
     @transaction.atomic
-    def start(self):
+    def start(self, schedule_time: Optional['ScheduleTime'] = None):
         """
         Start the actuator
         """
         self.gpio.start()
         if not self.gpio.test_mode:
-            ActuatorRun.objects.create(actuator=self, start_time=datetime.now())
+            ActuatorRun.objects.create(actuator=self, start_datetime=datetime.now(), schedule_time=schedule_time)
 
     @transaction.atomic
-    def stop(self):
+    def stop(self, schedule_time: Optional['ScheduleTime'] = None):
         """
         Stop the actuator
         """
         self.gpio.stop()
         if not self.gpio.test_mode:
-            current_run = ActuatorRun.objects.get(actuator=self, end_time__isnull=True)
-            current_run.end_time = datetime.now()
+            current_run = ActuatorRun.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
+            current_run.end_datetime = datetime.now()
             current_run.save()
 
 class ActuatorCollection(models.Model):
@@ -45,6 +53,7 @@ class ActuatorCollection(models.Model):
     actuators = models.ManyToManyField(Actuator, related_name='collections')
 
 class ScheduleTime(models.Model):
+    SCHEDULED_RUN_END_BUFFER = 5
 
     class Weekday(models.IntegerChoices):
         MONDAY = 0
@@ -69,23 +78,32 @@ class ScheduleTime(models.Model):
             return False
 
         if current_time > self.start_time:
-            # TODO check if there is an existing run before returning
-            pass
+            # is there already a run for the scheduled time today?
+            not_already_triggered = ActuatorRun.objects.filter(schedule_time=self, start_datetime__date=now.date()).exists()
+
+            if not already_triggered:
+                return True
 
         return False
+
+    def _run(self, actuator: Actuator):
+        actuator.start(schedule_time=self)
+        time.sleep(self.duration_in_minutes * 60)
+        actuator.stop(schedule_time=self)
+
 
     def run(self):
         for actuator in self.collection.actuators.all():
             if self.should_run(actuator):
-                actuator.start()
-                time.sleep(self.duration_in_minutes * 60)
+                self._run(actuator)
 
 class ActuatorRun(models.Model):
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    schedule_time = models.ForeignKey(ScheduleTime, blank=True, null=True, on_delete=models.CASCADE, help_text="Optional field indicating whether this is attached to a scheduled run. Will be blank if triggered manually")
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
 
     def status(self):
-        if not self.end_time:
+        if not self.end_datetime:
             return 'running'
         return 'finished'
