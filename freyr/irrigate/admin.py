@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from irrigate.models import Actuator, ActuatorCollection, ActuatorRun, ScheduleTime
+
+admin.site.register(Actuator)
+admin.site.register(ActuatorCollection)
+admin.site.register(ActuatorRun)
+admin.site.register(ScheduleTime)

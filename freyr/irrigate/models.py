@@ -13,8 +13,8 @@ class Actuator(models.Model):
     In our case, this represents a sprinkler zone.
     """
     name = models.CharField(max_length=255, help_text='A name to help identify which actuator this is')
-    gpio_pin = models.SmallIntegerField(help='GPIO pin on the raspberry pi')
-    device = models.CharField(max_length=255, help_text='Unique ID for a given device (e.g. garage pi, garden pi)'
+    gpio_pin = models.SmallIntegerField(help_text='GPIO pin on the raspberry pi')
+    device = models.CharField(max_length=255, help_text='Unique ID for a given device (e.g. garage pi, garden pi)')
 
     @property
     def gpio(self):
@@ -55,10 +55,10 @@ class ScheduleTime(models.Model):
         SATURDAY = 5
         SUNDAY = 6
 
-    start_time = models.TimeField(required=True)
-    day = models.IntegerField(max_length=1, choices=Weekday.choices, required=True)
+    start_time = models.TimeField()
+    day = models.IntegerField(choices=Weekday.choices)
     collection = models.ForeignKey(ActuatorCollection, on_delete=models.CASCADE)
-    duration_in_minutes = models.PositiveIntegerField(required=True)
+    duration_in_minutes = models.PositiveIntegerField()
 
     def should_run(self, actuator: Actuator):
         # TODO move to separate scheduler module
@@ -70,6 +70,7 @@ class ScheduleTime(models.Model):
 
         if current_time > self.start_time:
             # TODO check if there is an existing run before returning
+            pass
 
         return False
 
@@ -81,7 +82,7 @@ class ScheduleTime(models.Model):
 
 class ActuatorRun(models.Model):
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(required=True)
+    start_time = models.DateTimeField()
     end_time = models.DateTimeField()
 
     def status(self):
