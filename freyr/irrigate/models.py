@@ -51,9 +51,11 @@ class Actuator(models.Model):
             current_run.end_datetime = datetime.now()
             current_run.save()
 
+class ScheduleDay(models.Model):
 
-class ScheduleTime(models.Model):
-    SCHEDULED_RUN_END_BUFFER = 5
+    class Meta:
+        unique_together = [['month', 'weekday']]
+        ordering = ('weekday', 'month')
 
     class Weekday(models.IntegerChoices):
         MONDAY = 0
@@ -64,13 +66,36 @@ class ScheduleTime(models.Model):
         SATURDAY = 5
         SUNDAY = 6
 
-    start_time = models.TimeField()
+    class Month(models.IntegerChoices):
+        JANUARY = 0
+        FEBRUARY = 1
+        MARCH = 2
+        APRIL = 3
+        MAY = 4
+        JUNE = 5
+        JULY = 6
+        AUGUST = 7
+        SEPTEMBER = 8
+        OCTOBER = 9
+        NOVEMBER = 10
+        DECEMBER = 11
+
+    def __str__(self):
+        return f'{self.Month(self.month).name} - {self.Weekday(self.weekday).name}'
+
     weekday = models.IntegerField(choices=Weekday.choices)
-    actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
+    month = models.IntegerField(choices=Month.choices)
+
+class ScheduleTime(models.Model):
+    SCHEDULED_RUN_END_BUFFER = 5
+
+    start_time = models.TimeField()
+    schedule_day = models.ManyToManyField(ScheduleDay)
+    actuators = models.ManyToManyField(Actuator)
     duration_in_minutes = models.IntegerField()
 
     def __str__(self):
-        return f'{self.day} - {self.start_time} - {self.duration_in_minutes}'
+        return f'{self.schedule_day} - {self.start_time} - {self.duration_in_minutes}'
 
     def should_run(self, actuator: Actuator):
         # TODO move to separate scheduler module
