@@ -24,6 +24,9 @@ class Actuator(models.Model):
     gpio_pin = models.SmallIntegerField(help_text='GPIO pin on the raspberry pi')
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
+
     @property
     def gpio(self):
         return GPIO(self.gpio_pin)
@@ -48,9 +51,6 @@ class Actuator(models.Model):
             current_run.end_datetime = datetime.now()
             current_run.save()
 
-class ActuatorCollection(models.Model):
-    name = models.CharField(max_length=255, help_text='A name to help identify which collection this is')
-    actuators = models.ManyToManyField(Actuator, related_name='collections')
 
 class ScheduleTime(models.Model):
     SCHEDULED_RUN_END_BUFFER = 5
@@ -65,16 +65,19 @@ class ScheduleTime(models.Model):
         SUNDAY = 6
 
     start_time = models.TimeField()
-    day = models.IntegerField(choices=Weekday.choices)
-    collection = models.ForeignKey(ActuatorCollection, on_delete=models.CASCADE)
-    duration_in_minutes = models.PositiveIntegerField()
+    weekday = models.IntegerField(choices=Weekday.choices)
+    actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
+    duration_in_minutes = models.IntegerField()
+
+    def __str__(self):
+        return f'{self.day} - {self.start_time} - {self.duration_in_minutes}'
 
     def should_run(self, actuator: Actuator):
         # TODO move to separate scheduler module
         now = datetime.now()
         current_weekday = now.weekday()
         current_time = now.time()
-        if self.day != current_weekday:
+        if self.weekday != current_weekday:
             return False
 
         if current_time > self.start_time:
@@ -93,15 +96,17 @@ class ScheduleTime(models.Model):
 
 
     def run(self):
-        for actuator in self.collection.actuators.all():
-            if self.should_run(actuator):
-                self._run(actuator)
+        if self.should_run(self.actuator):
+            self._run(self.actuator)
 
-class ActuatorRun(models.Model):
+class ActuatorRunLog(models.Model):
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
     schedule_time = models.ForeignKey(ScheduleTime, blank=True, null=True, on_delete=models.CASCADE, help_text="Optional field indicating whether this is attached to a scheduled run. Will be blank if triggered manually")
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
+
+    def __str__(self):
+        return f'{self.start_datetime} - {self.end_datetime}'
 
     def status(self):
         if not self.end_datetime:
