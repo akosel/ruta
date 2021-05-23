@@ -23,6 +23,8 @@ class Actuator(models.Model):
     name = models.CharField(max_length=255, help_text='A name to help identify which actuator this is')
     gpio_pin = models.SmallIntegerField(help_text='GPIO pin on the raspberry pi')
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    flow_rate_per_minute = models.FloatField(default=0.025)
+    base_inches_per_week = models.FloatField(default=1)
 
     def __str__(self):
         return self.name
@@ -30,6 +32,27 @@ class Actuator(models.Model):
     @property
     def gpio(self):
         return GPIO(self.gpio_pin)
+
+    @property
+    def total_duration_in_minutes_per_week(self):
+        """
+        Total minutes of watering needed per week
+        """
+        return self.base_inches_per_week / self.flow_rate_per_minute
+
+    @property
+    def duration_in_minutes_per_scheduled_day(self):
+        """
+        Number of minutes to run per day
+        """
+        return self.total_duration_in_minutes_per_week / self.scheduled_day_count
+
+    @property
+    def scheduled_day_count(self):
+        """
+        """
+        return self.schedule_days.all().count()
+
 
     @transaction.atomic
     def start(self, schedule_time: Optional['ScheduleTime'] = None):
@@ -51,11 +74,8 @@ class Actuator(models.Model):
             current_run.end_datetime = datetime.now()
             current_run.save()
 
-class ScheduleDay(models.Model):
-
-    class Meta:
-        unique_together = [['month', 'weekday']]
-        ordering = ('weekday', 'month')
+class ScheduleTime(models.Model):
+    SCHEDULED_RUN_END_BUFFER = 5
 
     class Weekday(models.IntegerChoices):
         MONDAY = 0
@@ -66,36 +86,12 @@ class ScheduleDay(models.Model):
         SATURDAY = 5
         SUNDAY = 6
 
-    class Month(models.IntegerChoices):
-        JANUARY = 0
-        FEBRUARY = 1
-        MARCH = 2
-        APRIL = 3
-        MAY = 4
-        JUNE = 5
-        JULY = 6
-        AUGUST = 7
-        SEPTEMBER = 8
-        OCTOBER = 9
-        NOVEMBER = 10
-        DECEMBER = 11
-
-    def __str__(self):
-        return f'{self.Month(self.month).name} - {self.Weekday(self.weekday).name}'
-
-    weekday = models.IntegerField(choices=Weekday.choices)
-    month = models.IntegerField(choices=Month.choices)
-
-class ScheduleTime(models.Model):
-    SCHEDULED_RUN_END_BUFFER = 5
-
     start_time = models.TimeField()
-    schedule_day = models.ManyToManyField(ScheduleDay)
+    weekday = models.IntegerField(choices=Weekday.choices)
     actuators = models.ManyToManyField(Actuator)
-    duration_in_minutes = models.IntegerField()
 
     def __str__(self):
-        return f'{self.schedule_day} - {self.start_time} - {self.duration_in_minutes}'
+        return f'{self.Weekday(self.weekday).name} - {self.start_time} - {list(self.actuators.all())}'
 
     def should_run(self, actuator: Actuator):
         # TODO move to separate scheduler module
@@ -125,6 +121,9 @@ class ScheduleTime(models.Model):
             self._run(self.actuator)
 
 class ActuatorRunLog(models.Model):
+    RUNNING = 'running'
+    FINISHED = 'finished'
+
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
     schedule_time = models.ForeignKey(ScheduleTime, blank=True, null=True, on_delete=models.CASCADE, help_text="Optional field indicating whether this is attached to a scheduled run. Will be blank if triggered manually")
     start_datetime = models.DateTimeField()
@@ -135,5 +134,5 @@ class ActuatorRunLog(models.Model):
 
     def status(self):
         if not self.end_datetime:
-            return 'running'
-        return 'finished'
+            return self.RUNNING
+        return self.FINISHED

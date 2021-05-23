@@ -13,4 +13,4 @@ def get_forecasted_weather(location=WHERE_I_AM, days=3):
 
 def get_historical_weather(location=WHERE_I_AM, days_ago=3):
     dt = datetime.now() - timedelta(days=days_ago)
-    return requests.get(f'{BASE_URL}/history.json', params={'q': location, 'key': key, 'dt': dt}).json()
+    return requests.get(f'{BASE_URL}/history.json', params={'q': location, 'key': key, 'dt': dt, 'end_dt': datetime.now()}).json()
