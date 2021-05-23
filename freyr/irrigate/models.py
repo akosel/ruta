@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from django.db import models, transaction
@@ -12,7 +12,6 @@ class Device(models.Model):
     def __str__(self):
         return self.name
 
-# Create your models here.
 class Actuator(models.Model):
     """
     An actuator is a component of a machine that is responsible for moving and
@@ -52,6 +51,21 @@ class Actuator(models.Model):
         """
         """
         return self.schedule_days.all().count()
+
+    def get_recent_water_amount(self, days_ago=7):
+        now = datetime.now()
+        start_datetime = now - timedelta(days=days_ago)
+        recent_runs = ActuatorRunLog.objects.get(start_time__gt=start_datetime)
+
+        total_minutes = 0
+        for run in recent_runs:
+            # being defensive here. if no end datetime is specified, do not
+            # count it
+            if not run.end_datetime:
+                continue
+            total_minutes += (run.end_datetime - run.start_datetime).minutes
+
+        return total_minutes
 
 
     @transaction.atomic
