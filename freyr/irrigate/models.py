@@ -93,33 +93,6 @@ class ScheduleTime(models.Model):
     def __str__(self):
         return f'{self.Weekday(self.weekday).name} - {self.start_time} - {list(self.actuators.all())}'
 
-    def should_run(self, actuator: Actuator):
-        # TODO move to separate scheduler module
-        now = datetime.now()
-        current_weekday = now.weekday()
-        current_time = now.time()
-        if self.weekday != current_weekday:
-            return False
-
-        if current_time > self.start_time:
-            # is there already a run for the scheduled time today?
-            not_already_triggered = ActuatorRun.objects.filter(schedule_time=self, start_datetime__date=now.date()).exists()
-
-            if not already_triggered:
-                return True
-
-        return False
-
-    def _run(self, actuator: Actuator):
-        actuator.start(schedule_time=self)
-        time.sleep(self.duration_in_minutes * 60)
-        actuator.stop(schedule_time=self)
-
-
-    def run(self):
-        if self.should_run(self.actuator):
-            self._run(self.actuator)
-
 class ActuatorRunLog(models.Model):
     RUNNING = 'running'
     FINISHED = 'finished'
@@ -130,8 +103,9 @@ class ActuatorRunLog(models.Model):
     end_datetime = models.DateTimeField()
 
     def __str__(self):
-        return f'{self.start_datetime} - {self.end_datetime}'
+        return f'{self.start_datetime} - {self.end_datetime} - {self.status}'
 
+    @property
     def status(self):
         if not self.end_datetime:
             return self.RUNNING
