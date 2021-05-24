@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 WHERE_I_AM = 'Ann Arbor'
 BASE_URL = 'http://api.weatherapi.com/v1'
-key = 'a93ec7cf4a7341358e004153211605'
+key = '' # put in settings
 
 def get_current_weather(location=WHERE_I_AM):
     return requests.get(f'{BASE_URL}/current.json', params={'q': location, 'key': key}).json()
