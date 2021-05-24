@@ -44,15 +44,15 @@ class Actuator(models.Model):
         """
         Number of minutes to run per day
         """
-        return self.total_duration_in_minutes_per_week / self.scheduled_day_count
+        return self.total_duration_in_minutes_per_week / self.get_number_of_scheduled_times()
 
-    @property
-    def scheduled_day_count(self):
+    def get_number_of_scheduled_times(self):
         """
+        Get the number of times the actuator is scheduled to run
         """
-        return self.schedule_days.all().count()
+        return self.scheduletime_set.all().count()
 
-    def get_recent_water_amount(self, days_ago=7):
+    def get_recent_water_amount_in_inches(self, days_ago=7):
         now = datetime.now()
         start_datetime = now - timedelta(days=days_ago)
         recent_runs = ActuatorRunLog.objects.get(start_time__gt=start_datetime)
@@ -65,7 +65,7 @@ class Actuator(models.Model):
                 continue
             total_minutes += (run.end_datetime - run.start_datetime).minutes
 
-        return total_minutes
+        return total_minutes * self.flow_rate_per_minute
 
 
     @transaction.atomic
@@ -75,7 +75,7 @@ class Actuator(models.Model):
         """
         self.gpio.start()
         if not self.gpio.test_mode:
-            ActuatorRun.objects.create(actuator=self, start_datetime=datetime.now(), schedule_time=schedule_time)
+            ActuatorRunLog.objects.create(actuator=self, start_datetime=datetime.now(), schedule_time=schedule_time)
 
     @transaction.atomic
     def stop(self, schedule_time: Optional['ScheduleTime'] = None):
@@ -84,7 +84,7 @@ class Actuator(models.Model):
         """
         self.gpio.stop()
         if not self.gpio.test_mode:
-            current_run = ActuatorRun.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
+            current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
             current_run.end_datetime = datetime.now()
             current_run.save()
 
