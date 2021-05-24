@@ -55,7 +55,7 @@ class Actuator(models.Model):
     def get_recent_water_amount_in_inches(self, days_ago=7):
         now = datetime.now()
         start_datetime = now - timedelta(days=days_ago)
-        recent_runs = ActuatorRunLog.objects.get(start_time__gt=start_datetime)
+        recent_runs = ActuatorRunLog.objects.filter(actuator=self, start_datetime__gt=start_datetime)
 
         total_minutes = 0
         for run in recent_runs:
@@ -63,7 +63,7 @@ class Actuator(models.Model):
             # count it
             if not run.end_datetime:
                 continue
-            total_minutes += (run.end_datetime - run.start_datetime).minutes
+            total_minutes += (run.end_datetime - run.start_datetime).seconds / 60
 
         return total_minutes * self.flow_rate_per_minute
 
@@ -114,7 +114,7 @@ class ActuatorRunLog(models.Model):
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
     schedule_time = models.ForeignKey(ScheduleTime, blank=True, null=True, on_delete=models.CASCADE, help_text="Optional field indicating whether this is attached to a scheduled run. Will be blank if triggered manually")
     start_datetime = models.DateTimeField()
-    end_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f'{self.start_datetime} - {self.end_datetime} - {self.status}'
