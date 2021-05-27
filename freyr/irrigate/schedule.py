@@ -1,8 +1,10 @@
 from typing import Optional
 
-from irrigate.constants import MINIMUM_WATER_DURATION_IN_SECONDS, SKIP_WATERING_THRESHOLD_IN_SECONDS
+from irrigate.constants import (MINIMUM_WATER_DURATION_IN_SECONDS,
+                                SKIP_WATERING_THRESHOLD_IN_SECONDS)
 from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
 from irrigate.weather import get_forecasted_weather, get_historical_weather
+
 
 def get_precipitation_from_rain_in_inches(days_ago=7):
     """
@@ -49,31 +51,19 @@ def get_duration_in_seconds(actuator: Actuator) -> int:
     return duration_in_seconds
 
 def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None):
-    if should_run(actuator):
-        duration_in_seconds = get_duration_in_seconds(actuator)
-        if duration_in_seconds:
-            actuator.start(schedule_time=self)
-            time.sleep(get_duration_in_seconds(actuator))
-            actuator.stop(schedule_time=self)
-        else:
-            print('Skipping run')
+    duration_in_seconds = get_duration_in_seconds(actuator)
+    if duration_in_seconds:
+        actuator.start(schedule_time=schedule_time)
+        time.sleep(duration_in_seconds)
+        actuator.stop(schedule_time=schedule_time)
+    else:
+        print('Skipping run')
 
 def run():
-    if self.should_run(self.actuator):
-        self_run(self.actuator)
-
-def should_run(actuator: Actuator):
     now = datetime.now()
-    current_weekday = now.weekday()
-    current_time = now.time()
-    if self.weekday != current_weekday:
-        return False
-
-    if current_time > self.start_time:
-        # is there already a run for the scheduled time today?
-        already_triggered = ActuatorRun.objects.filter(schedule_time=self, start_datetime__date=now.date()).exists()
-
-        if not already_triggered:
-            return True
-
-    return False
+    weekday = now.weekday()
+    hour = now.time()
+    schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__gt=hour)
+    for schedule_time in schedule_times:
+        for actuator in schedule_time.actuators.all():
+            self_run(actuator, schedule_time=schedule_time)
