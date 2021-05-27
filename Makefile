@@ -1,6 +1,6 @@
 .PHONY: run
 run:
-	cd freyr && poetry run python manage.py runserver
+	cd freyr && poetry run python manage.py runserver 0.0.0.0:9000
 
 .PHONY: migrations
 migrations:
