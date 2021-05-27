@@ -1,9 +1,11 @@
 import requests
 from datetime import datetime, timedelta
 
+from django.conf import settings
+
 WHERE_I_AM = 'Ann Arbor'
 BASE_URL = 'http://api.weatherapi.com/v1'
-key = '' # put in settings
+key = settings.WEATHER_API_KEY
 
 def get_current_weather(location=WHERE_I_AM):
     return requests.get(f'{BASE_URL}/current.json', params={'q': location, 'key': key}).json()
