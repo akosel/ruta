@@ -60,6 +60,11 @@ class ScheduleTests(TestCase):
             run_all()
             mock_sleep.assert_called_once_with(SPRINKLER_DURATION)
 
+        mock_sleep.reset_mock()
+        with freeze_time('2021-05-31 11:00'):
+            run_all()
+            mock_sleep.assert_not_called()
+
     @patch('irrigate.schedule.get_duration_in_seconds')
     @patch('irrigate.schedule.time.sleep')
     def test_run_all_multiple(self, mock_sleep, mock_get_duration_in_seconds):
@@ -75,6 +80,11 @@ class ScheduleTests(TestCase):
         with freeze_time('2021-05-31 10:01'):
             run_all()
             self.assertEqual(mock_sleep.call_count, 2)
+
+        mock_sleep.reset_mock()
+        with freeze_time('2021-05-31 11:00'):
+            run_all()
+            mock_sleep.assert_not_called()
 
     @patch('irrigate.schedule._run')
     def test_run_all_no_times(self, mock_run):

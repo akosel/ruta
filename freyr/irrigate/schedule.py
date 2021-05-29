@@ -64,6 +64,10 @@ def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_r
             print(f'Would run {actuator} for {duration_in_seconds} second(s)')
     return duration_in_seconds
 
+def has_run(schedule_time: ScheduleTime, actuator: Actuator):
+    now = timezone.now().date()
+    return ActuatorRunLog.objects.filter(schedule_time=schedule_time, actuator=actuator, start_datetime__date=now).exists()
+
 def run_all(dry_run: bool = False):
     now = timezone.now()
     weekday = now.weekday()
@@ -72,6 +76,10 @@ def run_all(dry_run: bool = False):
     verb = 'running' if not dry_run else 'simulating'
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
+            if has_run(schedule_time, actuator):
+                print(f'Actuator {actuator} has already run today for {schedule_time}')
+                continue
+
             if not dry_run:
                 print(f'{verb} actuator {actuator}')
                 seconds_run = _run(actuator, schedule_time=schedule_time)
