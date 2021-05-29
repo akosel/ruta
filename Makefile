@@ -9,3 +9,7 @@ migrations:
 .PHONY: migrate
 migrate:
 	cd freyr && poetry run python manage.py migrate
+
+.PHONY: test
+test:
+	cd freyr && poetry run python manage.py test irrigate
