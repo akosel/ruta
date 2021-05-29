@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 from django.utils import timezone
@@ -52,24 +53,29 @@ def get_duration_in_seconds(actuator: Actuator) -> int:
 
     return duration_in_seconds
 
-def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None) -> int:
+def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_run: bool = False) -> int:
     duration_in_seconds = get_duration_in_seconds(actuator)
     if duration_in_seconds:
-        actuator.start(schedule_time=schedule_time)
-        time.sleep(duration_in_seconds)
-        actuator.stop(schedule_time=schedule_time)
+        if not dry_run:
+            actuator.start(schedule_time=schedule_time)
+            time.sleep(duration_in_seconds)
+            actuator.stop(schedule_time=schedule_time)
+        else:
+            print(f'Would run {actuator} for {duration_in_seconds} second(s)')
     return duration_in_seconds
 
-def run_all():
+def run_all(dry_run: bool = False):
     now = timezone.now()
     weekday = now.weekday()
     hour = now.time()
-    schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__gt=hour)
+    schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__lte=hour)
+    verb = 'running' if not dry_run else 'simulating'
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
-            print(f'Running actuator {actuator}')
-            seconds_run = _run(actuator, schedule_time=schedule_time)
-            if seconds_run:
-                print(f'Finished running actuator {actuator} - {schedule_time} for {seconds_run} second(s)')
-            else:
-                print(f'Skipped running actuator {actuator} - {schedule_time}')
+            if not dry_run:
+                print(f'{verb} actuator {actuator}')
+                seconds_run = _run(actuator, schedule_time=schedule_time)
+                if seconds_run:
+                    print(f'Finished {verb} actuator {actuator} for {seconds_run} second(s)')
+                else:
+                    print(f'Skipped {verb} actuator {actuator}')

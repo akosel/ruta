@@ -28,7 +28,7 @@ class Actuator(models.Model):
     base_inches_per_week = models.FloatField(default=1)
 
     def __str__(self):
-        return self.name
+        return f'{self.name} - {self.gpio_pin}'
 
     @property
     def gpio(self):
@@ -76,19 +76,18 @@ class Actuator(models.Model):
         Start the actuator
         """
         self.gpio.start()
-        if not self.gpio.test_mode:
-            ActuatorRunLog.objects.create(actuator=self, start_datetime=timezone.now(), schedule_time=schedule_time)
+        ActuatorRunLog.objects.create(actuator=self, start_datetime=timezone.now(), schedule_time=schedule_time)
 
     @transaction.atomic
-    def stop(self, schedule_time: Optional['ScheduleTime'] = None):
+    def stop(self, schedule_time: Optional['ScheduleTime'] = None, duration_in_seconds: Optional[int] = None):
         """
         Stop the actuator
         """
         self.gpio.stop()
-        if not self.gpio.test_mode:
-            current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
-            current_run.end_datetime = timezone.now()
-            current_run.save()
+        current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
+        end_datetime = timezone.now() if not duration_in_seconds else (current_run.start_datetime + timedelta(seconds=duration_in_seconds))
+        current_run.end_datetime = end_datetime
+        current_run.save()
 
 class ScheduleTime(models.Model):
     SCHEDULED_RUN_END_BUFFER = 5

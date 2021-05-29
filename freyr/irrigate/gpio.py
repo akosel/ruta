@@ -1,9 +1,11 @@
 import inspect
 
+from django.conf import settings
+
 
 class GPIO:
     def __init__(self, pin: int):
-        self.test_mode = False
+        self.test_mode = settings.TEST
         self.gpio = None
         try:
             import RPi.GPIO as gpio

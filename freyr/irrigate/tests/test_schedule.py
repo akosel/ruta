@@ -1,14 +1,17 @@
+from datetime import time
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
-from irrigate.models import Actuator, ActuatorRunLog, Device
-from irrigate.schedule import get_duration_in_seconds
+from freezegun import freeze_time
+
+from irrigate.models import Actuator, ActuatorRunLog, Device, ScheduleTime
+from irrigate.schedule import get_duration_in_seconds, run_all
 
 
 class ScheduleTests(TestCase):
     def setUp(self):
-        device = Device.objects.create(name='device')
-        self.actuator = Actuator.objects.create(name='test', gpio_pin=5, device=device)
+        self.device = Device.objects.create(name='device')
+        self.actuator = Actuator.objects.create(name='test', gpio_pin=5, device=self.device)
 
     @patch('irrigate.schedule.get_precipitation_from_rain_in_inches')
     def test_get_duration_in_seconds(self, mock_get_precipitation_from_rain_in_inches):
@@ -41,3 +44,39 @@ class ScheduleTests(TestCase):
         mock_get_precipitation_from_rain_in_inches.return_value = .25
         duration_in_seconds = get_duration_in_seconds(self.actuator)
         self.assertEqual(round(duration_in_seconds), round(((1 - .67) / self.actuator.flow_rate_per_minute) * 60))
+
+    @patch('irrigate.schedule.get_duration_in_seconds')
+    @patch('irrigate.schedule.time.sleep')
+    def test_run_all(self, mock_sleep, mock_get_duration_in_seconds):
+        schedule_time = ScheduleTime.objects.create(weekday=0, start_time=time(10, 0))
+        schedule_time.actuators.add(self.actuator)
+        SPRINKLER_DURATION = 720
+        mock_get_duration_in_seconds.return_value = SPRINKLER_DURATION
+        with freeze_time('2021-05-31 9:55'):
+            run_all()
+            mock_sleep.assert_not_called()
+
+        with freeze_time('2021-05-31 10:01'):
+            run_all()
+            mock_sleep.assert_called_once_with(SPRINKLER_DURATION)
+
+    @patch('irrigate.schedule.get_duration_in_seconds')
+    @patch('irrigate.schedule.time.sleep')
+    def test_run_all_multiple(self, mock_sleep, mock_get_duration_in_seconds):
+        schedule_time = ScheduleTime.objects.create(weekday=0, start_time=time(10, 0))
+        another_actuator = Actuator.objects.create(name='test', gpio_pin=6, device=self.device)
+        schedule_time.actuators.add(self.actuator, another_actuator)
+        SPRINKLER_DURATION = 720
+        mock_get_duration_in_seconds.return_value = SPRINKLER_DURATION
+        with freeze_time('2021-05-31 9:55'):
+            run_all()
+            mock_sleep.assert_not_called()
+
+        with freeze_time('2021-05-31 10:01'):
+            run_all()
+            self.assertEqual(mock_sleep.call_count, 2)
+
+    @patch('irrigate.schedule._run')
+    def test_run_all_no_times(self, mock_run):
+        run_all()
+        mock_run.assert_not_called()
