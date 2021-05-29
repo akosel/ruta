@@ -1,8 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional
 
 from django.db import models, transaction
 from django.db.models import Q
+from django.utils import timezone
+
 from irrigate.gpio import GPIO
 
 
@@ -53,7 +55,7 @@ class Actuator(models.Model):
         return self.scheduletime_set.all().count()
 
     def get_recent_water_amount_in_inches(self, days_ago=7):
-        now = datetime.now()
+        now = timezone.now()
         start_datetime = now - timedelta(days=days_ago)
         recent_runs = ActuatorRunLog.objects.filter(actuator=self, start_datetime__gt=start_datetime)
 
@@ -75,7 +77,7 @@ class Actuator(models.Model):
         """
         self.gpio.start()
         if not self.gpio.test_mode:
-            ActuatorRunLog.objects.create(actuator=self, start_datetime=datetime.now(), schedule_time=schedule_time)
+            ActuatorRunLog.objects.create(actuator=self, start_datetime=timezone.now(), schedule_time=schedule_time)
 
     @transaction.atomic
     def stop(self, schedule_time: Optional['ScheduleTime'] = None):
@@ -85,7 +87,7 @@ class Actuator(models.Model):
         self.gpio.stop()
         if not self.gpio.test_mode:
             current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
-            current_run.end_datetime = datetime.now()
+            current_run.end_datetime = timezone.now()
             current_run.save()
 
 class ScheduleTime(models.Model):

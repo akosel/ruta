@@ -2,6 +2,7 @@ import requests
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils import timezone
 
 BASE_URL = 'http://api.weatherapi.com/v1'
 key = settings.WEATHER_API_KEY
@@ -14,5 +15,6 @@ def get_forecasted_weather(location=WHERE_I_AM, days=3):
     return requests.get(f'{BASE_URL}/forecast.json', params={'q': location, 'key': key, 'days': days}).json()
 
 def get_historical_weather(location=WHERE_I_AM, days_ago=3):
-    dt = datetime.now() - timedelta(days=days_ago)
-    return requests.get(f'{BASE_URL}/history.json', params={'q': location, 'key': key, 'dt': dt, 'end_dt': datetime.now()}).json()
+    now = timezone.now()
+    dt = now - timedelta(days=days_ago)
+    return requests.get(f'{BASE_URL}/history.json', params={'q': location, 'key': key, 'dt': dt, 'end_dt': now}).json()

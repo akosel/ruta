@@ -1,5 +1,7 @@
 from typing import Optional
 
+from django.utils import timezone
+
 from irrigate.constants import (MINIMUM_WATER_DURATION_IN_SECONDS,
                                 SKIP_WATERING_THRESHOLD_IN_SECONDS)
 from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
@@ -50,20 +52,24 @@ def get_duration_in_seconds(actuator: Actuator) -> int:
 
     return duration_in_seconds
 
-def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None):
+def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None) -> int:
     duration_in_seconds = get_duration_in_seconds(actuator)
     if duration_in_seconds:
         actuator.start(schedule_time=schedule_time)
         time.sleep(duration_in_seconds)
         actuator.stop(schedule_time=schedule_time)
-    else:
-        print('Skipping run')
+    return duration_in_seconds
 
-def run():
-    now = datetime.now()
+def run_all():
+    now = timezone.now()
     weekday = now.weekday()
     hour = now.time()
     schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__gt=hour)
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
-            self_run(actuator, schedule_time=schedule_time)
+            print(f'Running actuator {actuator}')
+            seconds_run = _run(actuator, schedule_time=schedule_time)
+            if seconds_run:
+                print(f'Finished running actuator {actuator} - {schedule_time} for {seconds_run} second(s)')
+            else:
+                print(f'Skipped running actuator {actuator} - {schedule_time}')

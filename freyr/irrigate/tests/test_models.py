@@ -2,6 +2,7 @@ from datetime import datetime, time, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
+from django.utils import timezone
 from irrigate.models import Actuator, ActuatorRunLog, Device, ScheduleTime
 
 
@@ -12,7 +13,7 @@ class ActuatorTests(TestCase):
 
     def test_get_recent_water_amount_in_inches(self):
         for i in range(3):
-            start_datetime = datetime.now() - timedelta(days=i + 1)
+            start_datetime = timezone.now() - timedelta(days=i + 1)
             end_datetime = start_datetime + timedelta(minutes=12)
             ActuatorRunLog.objects.create(actuator=self.actuator, start_datetime=start_datetime, end_datetime=end_datetime)
 
@@ -22,7 +23,7 @@ class ActuatorTests(TestCase):
 
     def test_get_recent_water_amount_in_inches_too_old(self):
         for i in range(3):
-            start_datetime = datetime.now() - timedelta(days=i + 3)
+            start_datetime = timezone.now() - timedelta(days=i + 3)
             end_datetime = start_datetime + timedelta(minutes=12)
             ActuatorRunLog.objects.create(actuator=self.actuator, start_datetime=start_datetime, end_datetime=end_datetime)
 
@@ -32,7 +33,7 @@ class ActuatorTests(TestCase):
 
     def test_get_recent_water_amount_in_inches_missing_end_datetime(self):
         for i in range(3):
-            start_datetime = datetime.now() - timedelta(days=i + 1)
+            start_datetime = timezone.now() - timedelta(days=i + 1)
             ActuatorRunLog.objects.create(actuator=self.actuator, start_datetime=start_datetime)
 
         amount = self.actuator.get_recent_water_amount_in_inches(days_ago=7)
