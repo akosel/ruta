@@ -17,3 +17,7 @@ test:
 .PHONY: shell
 shell:
 	cd freyr && poetry run python manage.py shell
+
+.PHONY: install
+install:
+	poetry install
