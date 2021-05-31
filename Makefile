@@ -13,3 +13,7 @@ migrate:
 .PHONY: test
 test:
 	cd freyr && poetry run python manage.py test irrigate
+
+.PHONY: shell
+shell:
+	cd freyr && poetry run python manage.py shell
