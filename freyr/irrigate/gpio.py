@@ -1,7 +1,9 @@
 import inspect
+import logging
 
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 class GPIO:
     def __init__(self, pin: int):
@@ -30,7 +32,7 @@ def decorator(func):
     def wrapper(self, *args, **kwargs):
         in_test_mode = getattr(self, 'test_mode', False)
         if in_test_mode:
-            print(f'Would call {func.__name__}')
+            logger.info(f'Would call {func.__name__}')
             return
         return func(self, *args, **kwargs)
     return wrapper

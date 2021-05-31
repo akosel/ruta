@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Optional
 
@@ -8,6 +9,7 @@ from irrigate.constants import (MINIMUM_WATER_DURATION_IN_SECONDS,
 from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
 from irrigate.weather import get_forecasted_weather, get_historical_weather
 
+logger = logging.getLogger(__name__)
 
 def get_precipitation_from_rain_in_inches(days_ago=7):
     """
@@ -61,7 +63,7 @@ def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_r
             time.sleep(duration_in_seconds)
             actuator.stop(schedule_time=schedule_time)
         else:
-            print(f'Would run {actuator} for {duration_in_seconds} second(s)')
+            logger.info(f'Would run {actuator} for {duration_in_seconds} second(s)')
     return duration_in_seconds
 
 def has_run(schedule_time: ScheduleTime, actuator: Actuator):
@@ -77,13 +79,13 @@ def run_all(dry_run: bool = False):
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
             if has_run(schedule_time, actuator):
-                print(f'Actuator {actuator} has already run today for {schedule_time}')
+                logger.info(f'Actuator {actuator} has already run today for {schedule_time}')
                 continue
 
             if not dry_run:
-                print(f'{verb} actuator {actuator}')
+                logger.info(f'{verb} actuator {actuator}')
                 seconds_run = _run(actuator, schedule_time=schedule_time)
                 if seconds_run:
-                    print(f'Finished {verb} actuator {actuator} for {seconds_run} second(s)')
+                    logger.info(f'Finished {verb} actuator {actuator} for {seconds_run} second(s)')
                 else:
-                    print(f'Skipped {verb} actuator {actuator}')
+                    logger.info(f'Skipped {verb} actuator {actuator}')
