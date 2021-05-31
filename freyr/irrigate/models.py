@@ -126,6 +126,3 @@ class ActuatorRunLog(models.Model):
             return self.RUNNING
         return self.FINISHED
 
-    def has_run(self, schedule_time: ScheduleTime, actuator: Actuator):
-        now = datetime.now().date()
-        return self.objects.filter(schedule_time=schedule_time, actuator=actuator, start_datetime__date=now).exists()
