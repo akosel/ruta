@@ -15,7 +15,7 @@ class ScheduleTests(TestCase):
 
     @patch('irrigate.schedule.get_precipitation_from_rain_in_inches')
     def test_get_duration_in_seconds(self, mock_get_precipitation_from_rain_in_inches):
-        self.actuator.get_recent_water_amount_in_minutes = Mock(return_value=.67)
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=.67)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         mock_get_precipitation_from_rain_in_inches.return_value = 0
         duration_in_seconds = get_duration_in_seconds(self.actuator)
@@ -23,7 +23,7 @@ class ScheduleTests(TestCase):
 
     @patch('irrigate.schedule.get_precipitation_from_rain_in_inches')
     def test_get_duration_in_seconds_skip_watering(self, mock_get_precipitation_from_rain_in_inches):
-        self.actuator.get_recent_water_amount_in_minutes = Mock(return_value=.9)
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=.9)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         mock_get_precipitation_from_rain_in_inches.return_value = 0
         duration_in_seconds = get_duration_in_seconds(self.actuator)
@@ -31,7 +31,7 @@ class ScheduleTests(TestCase):
 
     @patch('irrigate.schedule.get_precipitation_from_rain_in_inches')
     def test_get_duration_in_seconds_respect_baseline(self, mock_get_precipitation_from_rain_in_inches):
-        self.actuator.get_recent_water_amount_in_minutes = Mock(return_value=0)
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         mock_get_precipitation_from_rain_in_inches.return_value = 0
         duration_in_seconds = get_duration_in_seconds(self.actuator)
@@ -39,7 +39,7 @@ class ScheduleTests(TestCase):
 
     @patch('irrigate.schedule.get_precipitation_from_rain_in_inches')
     def test_get_duration_in_seconds_account_for_rain(self, mock_get_precipitation_from_rain_in_inches):
-        self.actuator.get_recent_water_amount_in_minutes = Mock(return_value=.42)
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=.42)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         mock_get_precipitation_from_rain_in_inches.return_value = .25
         duration_in_seconds = get_duration_in_seconds(self.actuator)
