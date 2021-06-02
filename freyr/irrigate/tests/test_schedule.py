@@ -45,9 +45,11 @@ class ScheduleTests(TestCase):
         duration_in_seconds = get_duration_in_seconds(self.actuator)
         self.assertEqual(round(duration_in_seconds), round(((1 - .67) / self.actuator.flow_rate_per_minute) * 60))
 
+    @patch('irrigate.schedule.get_temperature_watering_adjustment_multiplier')
     @patch('irrigate.schedule.get_duration_in_seconds')
     @patch('irrigate.schedule.time.sleep')
-    def test_run_all(self, mock_sleep, mock_get_duration_in_seconds):
+    def test_run_all(self, mock_sleep, mock_get_duration_in_seconds, mock_get_temperature_watering_adjustment_multiplier):
+        mock_get_temperature_watering_adjustment_multiplier.return_value = 1
         schedule_time = ScheduleTime.objects.create(weekday=0, start_time=time(10, 0))
         schedule_time.actuators.add(self.actuator)
         SPRINKLER_DURATION = 720
@@ -65,9 +67,11 @@ class ScheduleTests(TestCase):
             run_all()
             mock_sleep.assert_not_called()
 
+    @patch('irrigate.schedule.get_temperature_watering_adjustment_multiplier')
     @patch('irrigate.schedule.get_duration_in_seconds')
     @patch('irrigate.schedule.time.sleep')
-    def test_run_all_multiple(self, mock_sleep, mock_get_duration_in_seconds):
+    def test_run_all_multiple(self, mock_sleep, mock_get_duration_in_seconds, mock_get_temperature_watering_adjustment_multiplier):
+    mock_get_temperature_watering_adjustment_multiplier.return_value = 1
         schedule_time = ScheduleTime.objects.create(weekday=0, start_time=time(10, 0))
         another_actuator = Actuator.objects.create(name='test', gpio_pin=6, device=self.device)
         schedule_time.actuators.add(self.actuator, another_actuator)

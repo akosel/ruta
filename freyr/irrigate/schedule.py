@@ -7,7 +7,7 @@ from django.utils import timezone
 from irrigate.constants import (MINIMUM_WATER_DURATION_IN_SECONDS,
                                 SKIP_WATERING_THRESHOLD_IN_SECONDS)
 from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
-from irrigate.weather import get_forecasted_weather, get_historical_weather
+from irrigate.weather import get_current_weather, get_forecasted_weather, get_historical_weather
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,19 @@ def get_forecasted_precipitation_from_rain_in_inches(days=3, decay_factor=0.5):
     """
     data = get_forecasted_weather(days=days)
     return sum([day['day']['totalprecip_in'] * (decay_factor ^ i) for i, day in enumerate(data['forecast']['forecastday'])])
+
+def get_temperature_watering_adjustment_multiplier() -> float:
+    forecasted_weather = get_forecasted_weather(days=1)
+    max_temperature = forecasted_weather['forecast']['forecastday'][0]['day']['maxtemp_f']
+
+    if max_temperature >=85:
+        return 1.3
+    elif max_temperature >= 65:
+        return 1
+    elif max_temperature >= 45:
+        return .7
+
+    return 0
 
 def get_duration_in_seconds(actuator: Actuator) -> int:
     """
@@ -53,10 +66,12 @@ def get_duration_in_seconds(actuator: Actuator) -> int:
     # never water less than the minimum duration or more than the baseline duration
     duration_in_seconds = min(max(calculated_duration_in_seconds, MINIMUM_WATER_DURATION_IN_SECONDS), baseline_duration)
 
+
     return duration_in_seconds
 
 def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_run: bool = False) -> int:
-    duration_in_seconds = get_duration_in_seconds(actuator)
+    temperature_multiplier = get_temperature_watering_adjustment_multiplier()
+    duration_in_seconds = get_duration_in_seconds(actuator) * temperature_multiplier
     if duration_in_seconds:
         if not dry_run:
             actuator.start(schedule_time=schedule_time)
