@@ -21,3 +21,7 @@ shell:
 .PHONY: install
 install:
 	poetry install
+
+.PHONY: run_scheduled_jobs
+run_scheduled_jobs:
+	cd freyr && poetry run python manage.py run_scheduled_jobs

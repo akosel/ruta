@@ -71,7 +71,7 @@ class ScheduleTests(TestCase):
     @patch('irrigate.schedule.get_duration_in_seconds')
     @patch('irrigate.schedule.time.sleep')
     def test_run_all_multiple(self, mock_sleep, mock_get_duration_in_seconds, mock_get_temperature_watering_adjustment_multiplier):
-    mock_get_temperature_watering_adjustment_multiplier.return_value = 1
+        mock_get_temperature_watering_adjustment_multiplier.return_value = 1
         schedule_time = ScheduleTime.objects.create(weekday=0, start_time=time(10, 0))
         another_actuator = Actuator.objects.create(name='test', gpio_pin=6, device=self.device)
         schedule_time.actuators.add(self.actuator, another_actuator)

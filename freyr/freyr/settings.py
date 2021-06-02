@@ -133,3 +133,28 @@ WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 DEFAULT_WEATHER_LOCATION = os.getenv('DEFAULT_WEATHER_LOCATION', 'Ann Arbor')
 
 TEST = 'test' in sys.argv
+
+LOGGING = {
+   'version': 1,
+   'disable_existing_loggers': False,
+   'formatters': {
+       'verbose': {
+           'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+       },
+   },
+   'handlers': {
+       'console': {
+           'level': 'INFO',
+           'class': 'logging.StreamHandler',
+           'stream': sys.stdout,
+           'formatter': 'verbose'
+       },
+   },
+   'loggers': {
+       '': {
+           'handlers': ['console'],
+           'level': 'INFO',
+           'propagate': True,
+       },
+   },
+}

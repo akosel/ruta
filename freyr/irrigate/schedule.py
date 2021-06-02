@@ -52,13 +52,16 @@ def get_duration_in_seconds(actuator: Actuator) -> int:
     """
     required_inches_of_water_per_week = actuator.base_inches_per_week
 
-    rain_amount = get_precipitation_from_rain_in_inches(days_ago=6)
-    sprinkler_amount = actuator.get_recent_water_amount_in_minutes(days_ago=6)
+    rain_amount = get_precipitation_from_rain_in_inches(days_ago=3)
+    sprinkler_amount = actuator.get_recent_water_amount_in_inches(days_ago=3)
 
     baseline_duration = actuator.duration_in_minutes_per_scheduled_day * 60
     rolling_weekly_shortfall = (required_inches_of_water_per_week - (rain_amount + sprinkler_amount))
+    logger.info(f'Rain amount: {rain_amount} - Sprinkler amount: {sprinkler_amount} - Baseline duration - {baseline_duration} - Shortfall: {rolling_weekly_shortfall}')
 
     calculated_duration_in_seconds = (rolling_weekly_shortfall / actuator.flow_rate_per_minute) * 60
+
+    logger.info(f'Calculated duration - {calculated_duration_in_seconds}')
 
     if calculated_duration_in_seconds < SKIP_WATERING_THRESHOLD_IN_SECONDS:
         return 0
@@ -72,6 +75,7 @@ def get_duration_in_seconds(actuator: Actuator) -> int:
 def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_run: bool = False) -> int:
     temperature_multiplier = get_temperature_watering_adjustment_multiplier()
     duration_in_seconds = get_duration_in_seconds(actuator) * temperature_multiplier
+    logger.info(f'Base duration is {duration_in_seconds} and temperature multipler is {temperature_multiplier}')
     if duration_in_seconds:
         if not dry_run:
             actuator.start(schedule_time=schedule_time)
@@ -91,6 +95,7 @@ def run_all(dry_run: bool = False):
     hour = now.time()
     schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__lte=hour)
     verb = 'running' if not dry_run else 'simulating'
+    logger.info(f'Scheduled times: {schedule_times}')
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
             if has_run(schedule_time, actuator):
