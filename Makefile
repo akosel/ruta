@@ -10,6 +10,10 @@ migrations:
 migrate:
 	cd freyr && poetry run python manage.py migrate
 
+.PHONY: migrate
+createsuperuser:
+	cd freyr && poetry run python manage.py createsuperuser
+
 .PHONY: test
 test:
 	cd freyr && poetry run python manage.py test irrigate

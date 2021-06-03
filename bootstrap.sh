@@ -15,8 +15,12 @@ sudo apt install python-is-python3
 # install pip
 sudo apt install python3-pip
 
+sudo apt install nginx
+
 # install poetry for python dependency management
 # see https://python-poetry.org/docs/ for details
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 
 make install
+make migrate
+make createsuperuser
