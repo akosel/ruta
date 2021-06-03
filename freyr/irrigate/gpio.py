@@ -10,22 +10,28 @@ class GPIO:
         self.test_mode = settings.TEST
         self.gpio = None
         try:
-            import RPi.GPIO as gpio
-            self.gpio = gpio
+            import lgpio
+            self.gpio = lgpio
         except:
+            logger.info('Unable to import lgpio...running in test mode.')
             self.test_mode = True
 
         self.pin = pin
+        self.handle = self.gpio.gpiochip_open(0)
+        self.setup()
 
     def setup(self):
-        gpio.setmode(self.gpio.BCM)
-        gpio.setup(self.pin, self.gpio.OUT)
+        self.gpio.gpio_claim_output(self.handle, self.pin)
 
     def start(self):
-        gpio.output(self.pin, self.gpio.HIGH)
+        self.gpio.gpio_write(self.handle, self.pin, 1)
 
     def stop(self):
-        gpio.output(self.pin, self.gpio.LOW)
+        self.gpio.gpio_write(self.handle, self.pin, 0)
+
+    def close(self):
+        self.stop()
+        self.gpio.gpiochip_close(self.handle)
 
 
 def decorator(func):
