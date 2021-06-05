@@ -32,7 +32,10 @@ class Actuator(models.Model):
 
     @property
     def gpio(self):
-        return GPIO(self.gpio_pin)
+        if not getattr(self, '_gpio', None):
+            self._gpio = GPIO(self.gpio_pin)
+
+        return self._gpio
 
     @property
     def total_duration_in_minutes_per_week(self):
