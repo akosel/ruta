@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Optional
+from typing import List, Optional
 
 from django.utils import timezone
 
@@ -89,13 +89,19 @@ def has_run(schedule_time: ScheduleTime, actuator: Actuator):
     now = timezone.now().date()
     return ActuatorRunLog.objects.filter(schedule_time=schedule_time, actuator=actuator, start_datetime__date=now).exists()
 
-def run_all(dry_run: bool = False):
+def run_all(dry_run: bool = False) -> List[Actuator]:
+    """
+    Run sprinklers scheduled to run in order, one at a time.
+
+    Returns sprinklers that ran, if any.
+    """
     now = timezone.now()
     weekday = now.weekday()
     hour = now.time()
     schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__lte=hour)
     verb = 'running' if not dry_run else 'simulating'
     logger.info(f'Scheduled times: {schedule_times}')
+    actuators_that_ran = []
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
             if has_run(schedule_time, actuator):
@@ -109,6 +115,8 @@ def run_all(dry_run: bool = False):
                     logger.info(f'Finished {verb} actuator {actuator} for {seconds_run} second(s)')
                 else:
                     logger.info(f'Skipped {verb} actuator {actuator}')
+            actuators_that_ran.append(actuator)
+    return actuators_that_ran
 
 def stop_all():
     """

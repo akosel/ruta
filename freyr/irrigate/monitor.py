@@ -1,5 +1,6 @@
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Optional
 
 import requests
@@ -15,9 +16,8 @@ class MonitoringEventStatus(Enum):
 @dataclass
 class MonitoringEvent:
     name: str
-    description: Optional[str] = None
     status: MonitoringEventStatus
     created_at: datetime = timezone.now()
 
 def emit(event_data: MonitoringEvent):
-    return requests.post(BASE_URL, data=event_data)
+    return requests.post(BASE_URL, data=asdict(event_data))
