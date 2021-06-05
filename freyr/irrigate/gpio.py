@@ -31,7 +31,7 @@ class GPIO:
         self._gpio.gpio_write(self.handle, self.pin, 1)
 
     def read(self):
-        self._gpio.gpio_read(self.handle, self.pin)
+        return self._gpio.gpio_read(self.handle, self.pin)
 
     def close(self):
         self.stop()
