@@ -128,9 +128,12 @@ STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+# weather config
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 DEFAULT_WEATHER_LOCATION = os.getenv('DEFAULT_WEATHER_LOCATION', 'Ann Arbor')
+
+# monitoring configg
+MONITORING_WEBHOOK_URL = os.getenv('MONITORING_WEBHOOK_URL')
 
 TEST = 'test' in sys.argv
 
