@@ -109,3 +109,13 @@ def run_all(dry_run: bool = False):
                     logger.info(f'Finished {verb} actuator {actuator} for {seconds_run} second(s)')
                 else:
                     logger.info(f'Skipped {verb} actuator {actuator}')
+
+def stop_all():
+    """
+    This will run off all sprinklers
+    """
+    actuators = Actuator.objects.all()
+    for actuator in actuators:
+        logger.info(f'Stopping {actuator} ')
+        actuator.stop()
+        logger.info(f'Stopped {actuator} ')

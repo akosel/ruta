@@ -29,3 +29,8 @@ install:
 .PHONY: run_scheduled_jobs
 run_scheduled_jobs:
 	cd freyr && python manage.py run_scheduled_jobs
+
+.PHONY: run_scheduled_jobs
+stop_all:
+	cd freyr && python manage.py stop_all
+

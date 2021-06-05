@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from typing import Optional
 
@@ -7,6 +8,7 @@ from django.utils import timezone
 
 from irrigate.gpio import GPIO
 
+logger = logging.getLogger(__name__)
 
 class Device(models.Model):
     name = models.CharField(max_length=255, help_text='Unique ID for a given device (e.g. garage pi, garden pi)')
@@ -87,10 +89,16 @@ class Actuator(models.Model):
         Stop the actuator
         """
         self.gpio.stop()
-        current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
-        end_datetime = timezone.now() if not duration_in_seconds else (current_run.start_datetime + timedelta(seconds=duration_in_seconds))
-        current_run.end_datetime = end_datetime
-        current_run.save()
+        if schedule_time:
+            try:
+                current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
+            except ActuatorRunLog.DoesNotExist:
+                logger.warn(f'Unable to find matching run log for {self} at scheduled time {schedule_time}')
+                return
+
+            end_datetime = timezone.now() if not duration_in_seconds else (current_run.start_datetime + timedelta(seconds=duration_in_seconds))
+            current_run.end_datetime = end_datetime
+            current_run.save()
 
 class ScheduleTime(models.Model):
     SCHEDULED_RUN_END_BUFFER = 5
