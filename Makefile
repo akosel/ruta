@@ -1,31 +1,31 @@
 .PHONY: run
 run:
-	cd freyr && poetry run python manage.py runserver 0.0.0.0:9000
+	cd freyr && python manage.py runserver 0.0.0.0:9000
 
 .PHONY: migrations
 migrations:
-	cd freyr && poetry run python manage.py makemigrations
+	cd freyr && python manage.py makemigrations
 
 .PHONY: migrate
 migrate:
-	cd freyr && poetry run python manage.py migrate
+	cd freyr && python manage.py migrate
 
 .PHONY: migrate
 createsuperuser:
-	cd freyr && poetry run python manage.py createsuperuser
+	cd freyr && python manage.py createsuperuser
 
 .PHONY: test
 test:
-	cd freyr && poetry run python manage.py test irrigate
+	cd freyr && python manage.py test irrigate
 
 .PHONY: shell
 shell:
-	cd freyr && poetry run python manage.py shell
+	cd freyr && python manage.py shell
 
 .PHONY: install
 install:
-	poetry install
+	echo "Install not implemented at this time"
 
 .PHONY: run_scheduled_jobs
 run_scheduled_jobs:
-	cd freyr && poetry run python manage.py run_scheduled_jobs
+	cd freyr && python manage.py run_scheduled_jobs

@@ -17,8 +17,9 @@ class GPIO:
             self.test_mode = True
 
         self.pin = pin
-        self.handle = self.gpio.gpiochip_open(0)
-        self.setup()
+        if not self.test_mode:
+            self.handle = self.gpio.gpiochip_open(0)
+            self.setup()
 
     def setup(self):
         self.gpio.gpio_claim_output(self.handle, self.pin)
