@@ -53,9 +53,12 @@ class Actuator(models.Model):
         data = get_forecasted_weather(days=days)
         return sum([day['day']['totalprecip_in'] * (decay_factor ^ i) for i, day in enumerate(data['forecast']['forecastday'])])
 
-    def get_temperature_watering_adjustment_multiplier(self) -> float:
+    def get_todays_high_temperature(self):
         forecasted_weather = get_forecasted_weather(days=1)
-        max_temperature = forecasted_weather['forecast']['forecastday'][0]['day']['maxtemp_f']
+        return forecasted_weather['forecast']['forecastday'][0]['day']['maxtemp_f']
+
+    def get_temperature_watering_adjustment_multiplier(self) -> float:
+        max_temperature = self.get_todays_high_temperature()
 
         if max_temperature >=85:
             return 1.3

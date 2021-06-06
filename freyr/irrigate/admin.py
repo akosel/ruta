@@ -15,8 +15,27 @@ def stop(modeladmin, request, queryset):
         actuator.stop()
 
 class ActuatorAdmin(admin.ModelAdmin):
-    list_display = ['name', 'gpio_pin', 'get_duration_in_seconds', 'get_precipitation_from_rain_in_inches', 'get_temperature_watering_adjustment_multiplier']
+    list_display = ['name', 'gpio_pin', 'next_run_duration_in_minutes', 'temperature_multiplier', 'todays_high_temperature', 'last_1_days_precipitation', 'last_3_days_precipitation', 'last_7_days_precipitation']
+
     actions = [start, stop]
+
+    def last_1_days_precipitation(self, actuator):
+        return actuator.get_precipitation_from_rain_in_inches(days_ago=1)
+
+    def last_3_days_precipitation(self, actuator):
+        return actuator.get_precipitation_from_rain_in_inches(days_ago=3)
+
+    def last_7_days_precipitation(self, actuator):
+        return actuator.get_precipitation_from_rain_in_inches(days_ago=7)
+
+    def next_run_duration_in_minutes(self, actuator):
+        return actuator.get_duration_in_seconds() / 60
+
+    def todays_high_temperature(self, actuator):
+        return actuator.get_todays_high_temperature()
+
+    def temperature_multiplier(self, actuator):
+        return actuator.get_temperature_watering_adjustment_multiplier()
 
 admin.site.register(Actuator, ActuatorAdmin)
 admin.site.register(ActuatorRunLog)
