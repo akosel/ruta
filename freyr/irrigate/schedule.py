@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from django.utils import timezone
 
+from irrigate.monitor import MonitoringEvent, MonitoringEventStatus, emit
 from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,8 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
             if has_run(schedule_time, actuator):
                 logger.info(f'Actuator {actuator} has already run today for {schedule_time}')
                 continue
+            event = MonitoringEvent(name=f'Starting run for {schedule_time}', status=MonitoringEventStatus.IN_PROGRESS)
+            emit(event)
 
             if not dry_run:
                 logger.info(f'{verb} actuator {actuator}')

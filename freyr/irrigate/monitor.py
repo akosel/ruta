@@ -10,6 +10,7 @@ from django.utils import timezone
 BASE_URL = settings.MONITORING_WEBHOOK_URL
 
 class MonitoringEventStatus(Enum):
+    IN_PROGRESS = 'in progress'
     SUCCESS = 'success'
     FAILURE = 'failure'
 
