@@ -38,7 +38,7 @@ class ActuatorAdmin(admin.ModelAdmin):
         return f'Rain: {from_rain:.2f} -- Sprinklers: {from_sprinklers:.2f}'
 
     def next_run_duration_in_minutes(self, actuator):
-        return actuator.get_duration_in_seconds() / 60
+        return round(actuator.get_duration_in_seconds() / 60, 2)
 
     def todays_high_temperature(self, actuator):
         return actuator.get_todays_high_temperature()
