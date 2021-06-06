@@ -1,18 +1,18 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 
 from irrigate.models import Actuator, ActuatorRunLog, Device, ScheduleTime
 
 @admin.action(description='Start actuator')
 def start(modeladmin, request, queryset):
     if queryset.count() > 1:
-        raise ValueError('Only able to turn on 1 at a time')
+        messages.error(request, 'Only able to turn on 1 at a time')
+        return
     queryset[0].start()
 
 @admin.action(description='Stop actuator')
 def stop(modeladmin, request, queryset):
-    if queryset.count() > 1:
-        raise ValueError('Only able to turn on 1 at a time')
-    queryset[0].stop()
+    for actuator in queryset:
+        actuator.stop()
 
 class ActuatorAdmin(admin.ModelAdmin):
     list_display = ['name', 'gpio_pin']
