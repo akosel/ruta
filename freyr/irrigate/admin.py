@@ -20,13 +20,22 @@ class ActuatorAdmin(admin.ModelAdmin):
     actions = [start, stop]
 
     def last_1_days_precipitation(self, actuator):
-        return actuator.get_precipitation_from_rain_in_inches(days_ago=1)
+        days_ago = 1
+        from_rain = actuator.get_precipitation_from_rain_in_inches(days_ago=days_ago)
+        from_sprinklers = actuator.get_recent_water_amount_in_inches(days_ago=days_ago)
+        return f'Rain: {from_rain:.2f} -- Sprinklers: {from_sprinklers:.2f}'
 
     def last_3_days_precipitation(self, actuator):
-        return actuator.get_precipitation_from_rain_in_inches(days_ago=3)
+        days_ago = 3
+        from_rain = actuator.get_precipitation_from_rain_in_inches(days_ago=days_ago)
+        from_sprinklers = actuator.get_recent_water_amount_in_inches(days_ago=days_ago)
+        return f'Rain: {from_rain:.2f} -- Sprinklers: {from_sprinklers:.2f}'
 
     def last_7_days_precipitation(self, actuator):
-        return actuator.get_precipitation_from_rain_in_inches(days_ago=7)
+        days_ago = 7
+        from_rain = actuator.get_precipitation_from_rain_in_inches(days_ago=days_ago)
+        from_sprinklers = actuator.get_recent_water_amount_in_inches(days_ago=days_ago)
+        return f'Rain: {from_rain:.2f} -- Sprinklers: {from_sprinklers:.2f}'
 
     def next_run_duration_in_minutes(self, actuator):
         return actuator.get_duration_in_seconds() / 60
