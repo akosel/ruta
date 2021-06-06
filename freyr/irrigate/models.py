@@ -35,7 +35,7 @@ class Actuator(models.Model):
     def __str__(self):
         return f'{self.name} - {self.gpio_pin}'
 
-    def get_precipitation_from_rain_in_inches(self, days_ago=7):
+    def get_precipitation_from_rain_in_inches(self, days_ago=3):
         """
         Get the amount of precipitation that has fallen.
         """
