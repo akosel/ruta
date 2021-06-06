@@ -15,11 +15,11 @@ class Command(BaseCommand):
         try:
             actuators_that_ran = run_all(dry_run=dry_run)
         except Exception as e:
-            event = MonitoringEvent(name='Error while running scheduled jobs {e}', status=MonitoringEventStatus.FAILURE)
+            event = MonitoringEvent(name=f'Error while running scheduled jobs {e}', status=MonitoringEventStatus.FAILURE)
             emit(event)
             return
         if actuators_that_ran:
-            event = MonitoringEvent(name='Success ran for {actuators}', status=MonitoringEventStatus.SUCCESS)
+            event = MonitoringEvent(name=f'Success ran for {actuators_that_ran}', status=MonitoringEventStatus.SUCCESS)
             emit(event)
 
         logger.info(f'Finished checking for runnable jobs. dry_run: {dry_run}')
