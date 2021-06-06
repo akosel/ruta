@@ -16,7 +16,7 @@ def cache_response(func):
         if cache.get(key):
             return cache.get(key)
         data = func(*args, **kwargs)
-        cache.set(key, data)
+        cache.set(key, data, timeout=60 * 60)
         return data
     return wrapper
 
