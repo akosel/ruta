@@ -15,7 +15,7 @@ def stop(modeladmin, request, queryset):
         actuator.stop()
 
 class ActuatorAdmin(admin.ModelAdmin):
-    list_display = ['name', 'gpio_pin']
+    list_display = ['name', 'gpio_pin', 'get_duration_in_seconds', 'get_precipitation_from_rain_in_inches']
     actions = [start, stop]
 
 admin.site.register(Actuator, ActuatorAdmin)

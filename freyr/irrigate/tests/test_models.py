@@ -11,6 +11,34 @@ class ActuatorTests(TestCase):
         device = Device.objects.create(name='device')
         self.actuator = Actuator.objects.create(name='test', gpio_pin=5, device=device)
 
+    def test_get_duration_in_seconds(self):
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=.67)
+        self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
+        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
+        duration_in_seconds = self.actuator.get_duration_in_seconds()
+        self.assertEqual(duration_in_seconds, ((1 - .67) / self.actuator.flow_rate_per_minute) * 60)
+
+    def test_get_duration_in_seconds_skip_watering(self):
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=.9)
+        self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
+        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
+        duration_in_seconds = self.actuator.get_duration_in_seconds()
+        self.assertEqual(duration_in_seconds, 0)
+
+    def test_get_duration_in_seconds_respect_baseline(self):
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0)
+        self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
+        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
+        duration_in_seconds = self.actuator.get_duration_in_seconds()
+        self.assertEqual(duration_in_seconds, self.actuator.duration_in_minutes_per_scheduled_day * 60)
+
+    def test_get_duration_in_seconds_account_for_rain(self):
+        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=.42)
+        self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
+        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0.25)
+        duration_in_seconds = self.actuator.get_duration_in_seconds()
+        self.assertEqual(round(duration_in_seconds), round(((1 - .67) / self.actuator.flow_rate_per_minute) * 60))
+
     def test_get_recent_water_amount_in_inches(self):
         for i in range(3):
             start_datetime = timezone.now() - timedelta(days=i + 1)

@@ -6,7 +6,10 @@ from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from irrigate.constants import (MINIMUM_WATER_DURATION_IN_SECONDS,
+                                SKIP_WATERING_THRESHOLD_IN_SECONDS)
 from irrigate.gpio import GPIO
+from irrigate.weather import get_current_weather, get_forecasted_weather, get_historical_weather
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,67 @@ class Actuator(models.Model):
 
     def __str__(self):
         return f'{self.name} - {self.gpio_pin}'
+
+    def get_precipitation_from_rain_in_inches(self, days_ago=7):
+        """
+        Get the amount of precipitation that has fallen.
+        """
+        data = get_historical_weather(days_ago=days_ago)
+        return sum([day['day']['totalprecip_in'] for day in data['forecast']['forecastday']])
+
+    def get_forecasted_precipitation_from_rain_in_inches(self, days=3, decay_factor=0.5):
+        """
+        Get forecasted rain amount.
+
+        Weigh future values lower.
+
+        TODO could improve by using forecast confidence, if available.
+        """
+        data = get_forecasted_weather(days=days)
+        return sum([day['day']['totalprecip_in'] * (decay_factor ^ i) for i, day in enumerate(data['forecast']['forecastday'])])
+
+    def get_temperature_watering_adjustment_multiplier(self) -> float:
+        forecasted_weather = get_forecasted_weather(days=1)
+        max_temperature = forecasted_weather['forecast']['forecastday'][0]['day']['maxtemp_f']
+
+        if max_temperature >=85:
+            return 1.3
+        elif max_temperature >= 65:
+            return 1
+        elif max_temperature >= 45:
+            return .7
+
+        return 0
+
+    def get_duration_in_seconds(self) -> int:
+        """
+        Calculate the total time the sprinkler needs to run to get the desired amount
+        of amount of water.
+
+        This takes the flow rate of the sprinkler into account and then uses other
+        information (such as weather) to modify the time.
+        """
+        required_inches_of_water_per_week = self.base_inches_per_week
+
+        rain_amount = self.get_precipitation_from_rain_in_inches(days_ago=3)
+        sprinkler_amount = self.get_recent_water_amount_in_inches(days_ago=3)
+
+        baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
+        rolling_weekly_shortfall = (required_inches_of_water_per_week - (rain_amount + sprinkler_amount))
+        logger.info(f'Rain amount: {rain_amount} - Sprinkler amount: {sprinkler_amount} - Baseline duration - {baseline_duration} - Shortfall: {rolling_weekly_shortfall}')
+
+        calculated_duration_in_seconds = (rolling_weekly_shortfall / self.flow_rate_per_minute) * 60
+
+        logger.info(f'Calculated duration - {calculated_duration_in_seconds}')
+
+        if calculated_duration_in_seconds < SKIP_WATERING_THRESHOLD_IN_SECONDS:
+            return 0
+
+        # never water less than the minimum duration or more than the baseline duration
+        duration_in_seconds = min(max(calculated_duration_in_seconds, MINIMUM_WATER_DURATION_IN_SECONDS), baseline_duration)
+
+
+        return duration_in_seconds
 
     @property
     def total_duration_in_minutes_per_week(self):
@@ -97,8 +161,6 @@ class Actuator(models.Model):
                 current_run.save()
 
 class ScheduleTime(models.Model):
-    SCHEDULED_RUN_END_BUFFER = 5
-
     class Weekday(models.IntegerChoices):
         MONDAY = 0
         TUESDAY = 1
