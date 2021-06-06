@@ -19,7 +19,13 @@ class GPIO:
         self.pin = pin
         if not self.test_mode:
             self.handle = self._gpio.gpiochip_open(0)
-            self.setup()
+
+    def __enter__(self):
+        self.setup()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
 
     def setup(self):
         self._gpio.gpio_claim_output(self.handle, self.pin)
@@ -34,7 +40,6 @@ class GPIO:
         return self._gpio.gpio_read(self.handle, self.pin)
 
     def close(self):
-        self.stop()
         self._gpio.gpiochip_close(self.handle)
 
 

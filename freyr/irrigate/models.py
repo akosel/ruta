@@ -33,13 +33,6 @@ class Actuator(models.Model):
         return f'{self.name} - {self.gpio_pin}'
 
     @property
-    def gpio(self):
-        if not getattr(self, '_gpio', None):
-            self._gpio = GPIO(self.gpio_pin)
-
-        return self._gpio
-
-    @property
     def total_duration_in_minutes_per_week(self):
         """
         Total minutes of watering needed per week
@@ -80,25 +73,28 @@ class Actuator(models.Model):
         """
         Start the actuator
         """
-        self.gpio.start()
-        ActuatorRunLog.objects.create(actuator=self, start_datetime=timezone.now(), schedule_time=schedule_time)
+        with GPIO(self.gpio_pin) as gpio:
+            gpio.start()
+            if schedule_time:
+                ActuatorRunLog.objects.create(actuator=self, start_datetime=timezone.now(), schedule_time=schedule_time)
 
     @transaction.atomic
     def stop(self, schedule_time: Optional['ScheduleTime'] = None, duration_in_seconds: Optional[int] = None):
         """
         Stop the actuator
         """
-        self.gpio.stop()
-        if schedule_time:
-            try:
-                current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
-            except ActuatorRunLog.DoesNotExist:
-                logger.warn(f'Unable to find matching run log for {self} at scheduled time {schedule_time}')
-                return
+        with GPIO(self.gpio_pin) as gpio:
+            gpio.stop()
+            if schedule_time:
+                try:
+                    current_run = ActuatorRunLog.objects.get(actuator=self, end_datetime__isnull=True, schedule_time=schedule_time)
+                except ActuatorRunLog.DoesNotExist:
+                    logger.warn(f'Unable to find matching run log for {self} at scheduled time {schedule_time}')
+                    return
 
-            end_datetime = timezone.now() if not duration_in_seconds else (current_run.start_datetime + timedelta(seconds=duration_in_seconds))
-            current_run.end_datetime = end_datetime
-            current_run.save()
+                end_datetime = timezone.now() if not duration_in_seconds else (current_run.start_datetime + timedelta(seconds=duration_in_seconds))
+                current_run.end_datetime = end_datetime
+                current_run.save()
 
 class ScheduleTime(models.Model):
     SCHEDULED_RUN_END_BUFFER = 5
