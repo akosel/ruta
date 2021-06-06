@@ -23,6 +23,7 @@ def cache_response(func):
 def get_current_weather(location=WHERE_I_AM):
     return requests.get(f'{BASE_URL}/current.json', params={'q': location, 'key': key}).json()
 
+@cache_response
 def get_forecasted_weather(location=WHERE_I_AM, days=3):
     return requests.get(f'{BASE_URL}/forecast.json', params={'q': location, 'key': key, 'days': days}).json()
 
