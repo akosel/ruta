@@ -69,6 +69,18 @@ class Actuator(models.Model):
 
         return 0
 
+    def _get_base_duration_in_seconds(self):
+        required_inches_of_water_per_week = self.base_inches_per_week
+
+        baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
+        rain_amount = self.get_precipitation_from_rain_in_inches(days_ago=3)
+        sprinkler_amount = self.get_recent_water_amount_in_inches(days_ago=3)
+
+        rolling_weekly_shortfall = (required_inches_of_water_per_week - (rain_amount + sprinkler_amount))
+        logger.info(f'Rain amount: {rain_amount} - Sprinkler amount: {sprinkler_amount} - Baseline duration - {baseline_duration} - Shortfall: {rolling_weekly_shortfall}')
+
+        return (rolling_weekly_shortfall / self.flow_rate_per_minute) * 60
+
     def get_duration_in_seconds(self) -> int:
         """
         Calculate the total time the sprinkler needs to run to get the desired amount
@@ -76,24 +88,22 @@ class Actuator(models.Model):
 
         This takes the flow rate of the sprinkler into account and then uses other
         information (such as weather) to modify the time.
+
+        There are controls in place to ensure the watering time stays within sane
+        boundaries.
         """
-        required_inches_of_water_per_week = self.base_inches_per_week
 
-        rain_amount = self.get_precipitation_from_rain_in_inches(days_ago=3)
-        sprinkler_amount = self.get_recent_water_amount_in_inches(days_ago=3)
+        base_duration_in_seconds = self._get_base_duration_in_seconds()
+        temperature_multiplier = self.get_temperature_watering_adjustment_multiplier()
+        logger.info(f'Base duration is {base_duration_in_seconds} and temperature multipler is {temperature_multiplier}')
 
-        baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
-        rolling_weekly_shortfall = (required_inches_of_water_per_week - (rain_amount + sprinkler_amount))
-        logger.info(f'Rain amount: {rain_amount} - Sprinkler amount: {sprinkler_amount} - Baseline duration - {baseline_duration} - Shortfall: {rolling_weekly_shortfall}')
-
-        calculated_duration_in_seconds = (rolling_weekly_shortfall / self.flow_rate_per_minute) * 60
-
-        logger.info(f'Calculated duration - {calculated_duration_in_seconds}')
+        calculated_duration_in_seconds = base_duration_in_seconds * temperature_multiplier
 
         if calculated_duration_in_seconds < SKIP_WATERING_THRESHOLD_IN_SECONDS:
             return 0
 
         # never water less than the minimum duration or more than the baseline duration
+        baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
         duration_in_seconds = min(max(calculated_duration_in_seconds, MINIMUM_WATER_DURATION_IN_SECONDS), baseline_duration)
 
 

@@ -11,9 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_run: bool = False) -> int:
-    temperature_multiplier = actuator.get_temperature_watering_adjustment_multiplier()
-    duration_in_seconds = actuator.get_duration_in_seconds() * temperature_multiplier
-    logger.info(f'Base duration is {duration_in_seconds} and temperature multipler is {temperature_multiplier}')
+    duration_in_seconds = actuator.get_duration_in_seconds()
     if duration_in_seconds:
         if not dry_run:
             actuator.start(schedule_time=schedule_time)

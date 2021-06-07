@@ -15,7 +15,7 @@ def stop(modeladmin, request, queryset):
         actuator.stop()
 
 class ActuatorAdmin(admin.ModelAdmin):
-    list_display = ['name', 'gpio_pin', 'next_run_duration_in_minutes', 'temperature_multiplier', 'todays_high_temperature', 'last_1_days_precipitation', 'last_3_days_precipitation', 'last_7_days_precipitation']
+    list_display = ['name', 'gpio_pin', 'calculated_duration_in_minutes', 'next_run_duration_in_minutes', 'temperature_multiplier', 'todays_high_temperature', 'last_1_days_precipitation', 'last_3_days_precipitation', 'last_7_days_precipitation']
 
     actions = [start, stop]
 
@@ -36,6 +36,9 @@ class ActuatorAdmin(admin.ModelAdmin):
         from_rain = actuator.get_precipitation_from_rain_in_inches(days_ago=days_ago)
         from_sprinklers = actuator.get_recent_water_amount_in_inches(days_ago=days_ago)
         return f'Rain: {from_rain:.2f} -- Sprinklers: {from_sprinklers:.2f}'
+
+    def calculated_duration_in_minutes(self, actuator):
+        return round(actuator._get_base_duration_in_seconds() / 60, 2)
 
     def next_run_duration_in_minutes(self, actuator):
         return round(actuator.get_duration_in_seconds() / 60, 2)
