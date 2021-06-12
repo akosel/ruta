@@ -59,7 +59,7 @@ class Actuator(models.Model):
         )
 
     def get_forecasted_precipitation_from_rain_in_inches(
-        self, days=3, decay_factor=0.5
+        self, days=3, decay_factor=0.9
     ):
         """
         Get forecasted rain amount.
