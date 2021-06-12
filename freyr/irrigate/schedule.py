@@ -12,13 +12,12 @@ logger = logging.getLogger(__name__)
 
 def _run(actuator: Actuator, schedule_time: Optional[ScheduleTime] = None, dry_run: bool = False) -> int:
     duration_in_seconds = actuator.get_duration_in_seconds()
-    if duration_in_seconds:
-        if not dry_run:
-            actuator.start(schedule_time=schedule_time)
-            time.sleep(duration_in_seconds)
-            actuator.stop(schedule_time=schedule_time)
-        else:
-            logger.info(f'Would run {actuator} for {duration_in_seconds} second(s)')
+    if not dry_run:
+        actuator.start(schedule_time=schedule_time)
+        time.sleep(duration_in_seconds)
+        actuator.stop(schedule_time=schedule_time)
+    else:
+        logger.info(f'Would run {actuator} for {duration_in_seconds} second(s)')
     return duration_in_seconds
 
 def has_run(schedule_time: ScheduleTime, actuator: Actuator):

@@ -200,7 +200,7 @@ class ActuatorRunLog(models.Model):
     end_datetime = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return f'{self.start_datetime} - {self.end_datetime} - {self.status}'
+        return f'{self.start_datetime} - {self.end_datetime} - {self.status} - {self.actuator}'
 
     @property
     def status(self):
