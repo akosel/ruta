@@ -24,7 +24,7 @@ shell:
 
 .PHONY: install
 install:
-	echo "Install not implemented at this time"
+	pip install -r requirements.txt
 
 .PHONY: run_scheduled_jobs
 run_scheduled_jobs:
