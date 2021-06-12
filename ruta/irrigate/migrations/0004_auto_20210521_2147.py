@@ -6,28 +6,28 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0003_auto_20210521_2135'),
+        ("irrigate", "0003_auto_20210521_2135"),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='ActuatorRun',
-            new_name='ActuatorRunLog',
+            old_name="ActuatorRun",
+            new_name="ActuatorRunLog",
         ),
         migrations.RenameField(
-            model_name='scheduletime',
-            old_name='day',
-            new_name='weekday',
+            model_name="scheduletime",
+            old_name="day",
+            new_name="weekday",
         ),
         migrations.RemoveField(
-            model_name='scheduletime',
-            name='collection',
+            model_name="scheduletime",
+            name="collection",
         ),
         migrations.RemoveField(
-            model_name='scheduletime',
-            name='duration_in_minutes',
+            model_name="scheduletime",
+            name="duration_in_minutes",
         ),
         migrations.DeleteModel(
-            name='ActuatorCollection',
+            name="ActuatorCollection",
         ),
     ]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0009_delete_scheduleday'),
+        ("irrigate", "0009_delete_scheduleday"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='actuatorrunlog',
-            name='end_datetime',
+            model_name="actuatorrunlog",
+            name="end_datetime",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

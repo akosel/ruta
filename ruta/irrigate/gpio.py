@@ -6,13 +6,15 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
 class GPIO:
     def __init__(self, pin: int):
         try:
             import lgpio
+
             self._gpio = lgpio
         except:
-            logger.warn('Unable to import lgpio...running in test mode.')
+            logger.warn("Unable to import lgpio...running in test mode.")
             self._gpio = Mock()
 
         if settings.TEST:

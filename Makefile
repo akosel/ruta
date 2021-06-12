@@ -34,3 +34,6 @@ run_scheduled_jobs:
 stop_all:
 	cd ruta && python manage.py stop_all
 
+.PHONY: codeformat
+codeformat:
+	cd ruta && black .

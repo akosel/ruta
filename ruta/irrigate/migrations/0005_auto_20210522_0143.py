@@ -7,19 +7,23 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0004_auto_20210521_2147'),
+        ("irrigate", "0004_auto_20210521_2147"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='scheduletime',
-            name='actuator',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='irrigate.actuator'),
+            model_name="scheduletime",
+            name="actuator",
+            field=models.ForeignKey(
+                default=1,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="irrigate.actuator",
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='scheduletime',
-            name='duration_in_minutes',
+            model_name="scheduletime",
+            name="duration_in_minutes",
             field=models.IntegerField(default=0),
             preserve_default=False,
         ),

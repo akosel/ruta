@@ -7,23 +7,29 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0001_initial'),
+        ("irrigate", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='actuatorrun',
-            old_name='end_time',
-            new_name='end_datetime',
+            model_name="actuatorrun",
+            old_name="end_time",
+            new_name="end_datetime",
         ),
         migrations.RenameField(
-            model_name='actuatorrun',
-            old_name='start_time',
-            new_name='start_datetime',
+            model_name="actuatorrun",
+            old_name="start_time",
+            new_name="start_datetime",
         ),
         migrations.AddField(
-            model_name='actuatorrun',
-            name='schedule_time',
-            field=models.ForeignKey(blank=True, help_text='Optional field indicating whether this is attached to a scheduled run. Will be blank if triggered manually', null=True, on_delete=django.db.models.deletion.CASCADE, to='irrigate.scheduletime'),
+            model_name="actuatorrun",
+            name="schedule_time",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Optional field indicating whether this is attached to a scheduled run. Will be blank if triggered manually",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="irrigate.scheduletime",
+            ),
         ),
     ]

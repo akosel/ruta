@@ -7,20 +7,36 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0002_auto_20210521_2128'),
+        ("irrigate", "0002_auto_20210521_2128"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Device',
+            name="Device",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='Unique ID for a given device (e.g. garage pi, garden pi)', max_length=255)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="Unique ID for a given device (e.g. garage pi, garden pi)",
+                        max_length=255,
+                    ),
+                ),
             ],
         ),
         migrations.AlterField(
-            model_name='actuator',
-            name='device',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='irrigate.device'),
+            model_name="actuator",
+            name="device",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="irrigate.device"
+            ),
         ),
     ]

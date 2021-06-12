@@ -6,16 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0006_auto_20210522_0158'),
+        ("irrigate", "0006_auto_20210522_0158"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='scheduleday',
-            options={'ordering': [['weekday', 'month']]},
+            name="scheduleday",
+            options={"ordering": [["weekday", "month"]]},
         ),
         migrations.AlterUniqueTogether(
-            name='scheduleday',
-            unique_together={('month', 'weekday')},
+            name="scheduleday",
+            unique_together={("month", "weekday")},
         ),
     ]

@@ -6,36 +6,47 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0007_auto_20210522_0225'),
+        ("irrigate", "0007_auto_20210522_0225"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='scheduleday',
-            options={'ordering': ('weekday', 'month')},
+            name="scheduleday",
+            options={"ordering": ("weekday", "month")},
         ),
         migrations.RemoveField(
-            model_name='scheduletime',
-            name='duration_in_minutes',
+            model_name="scheduletime",
+            name="duration_in_minutes",
         ),
         migrations.RemoveField(
-            model_name='scheduletime',
-            name='schedule_day',
+            model_name="scheduletime",
+            name="schedule_day",
         ),
         migrations.AddField(
-            model_name='actuator',
-            name='base_inches_per_week',
+            model_name="actuator",
+            name="base_inches_per_week",
             field=models.FloatField(default=1),
         ),
         migrations.AddField(
-            model_name='actuator',
-            name='flow_rate_per_minute',
+            model_name="actuator",
+            name="flow_rate_per_minute",
             field=models.FloatField(default=0.025),
         ),
         migrations.AddField(
-            model_name='scheduletime',
-            name='weekday',
-            field=models.IntegerField(choices=[(0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'), (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')], default=0),
+            model_name="scheduletime",
+            name="weekday",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Monday"),
+                    (1, "Tuesday"),
+                    (2, "Wednesday"),
+                    (3, "Thursday"),
+                    (4, "Friday"),
+                    (5, "Saturday"),
+                    (6, "Sunday"),
+                ],
+                default=0,
+            ),
             preserve_default=False,
         ),
     ]

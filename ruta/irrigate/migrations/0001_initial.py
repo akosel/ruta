@@ -8,44 +8,126 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Actuator',
+            name="Actuator",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='A name to help identify which actuator this is', max_length=255)),
-                ('gpio_pin', models.SmallIntegerField(help_text='GPIO pin on the raspberry pi')),
-                ('device', models.CharField(help_text='Unique ID for a given device (e.g. garage pi, garden pi)', max_length=255)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="A name to help identify which actuator this is",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "gpio_pin",
+                    models.SmallIntegerField(help_text="GPIO pin on the raspberry pi"),
+                ),
+                (
+                    "device",
+                    models.CharField(
+                        help_text="Unique ID for a given device (e.g. garage pi, garden pi)",
+                        max_length=255,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ActuatorCollection',
+            name="ActuatorCollection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='A name to help identify which collection this is', max_length=255)),
-                ('actuators', models.ManyToManyField(related_name='collections', to='irrigate.Actuator')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="A name to help identify which collection this is",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "actuators",
+                    models.ManyToManyField(
+                        related_name="collections", to="irrigate.Actuator"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ScheduleTime',
+            name="ScheduleTime",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('start_time', models.TimeField()),
-                ('day', models.IntegerField(choices=[(0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'), (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')])),
-                ('duration_in_minutes', models.PositiveIntegerField()),
-                ('collection', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='irrigate.actuatorcollection')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("start_time", models.TimeField()),
+                (
+                    "day",
+                    models.IntegerField(
+                        choices=[
+                            (0, "Monday"),
+                            (1, "Tuesday"),
+                            (2, "Wednesday"),
+                            (3, "Thursday"),
+                            (4, "Friday"),
+                            (5, "Saturday"),
+                            (6, "Sunday"),
+                        ]
+                    ),
+                ),
+                ("duration_in_minutes", models.PositiveIntegerField()),
+                (
+                    "collection",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="irrigate.actuatorcollection",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ActuatorRun',
+            name="ActuatorRun",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField()),
-                ('actuator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='irrigate.actuator')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("start_time", models.DateTimeField()),
+                ("end_time", models.DateTimeField()),
+                (
+                    "actuator",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="irrigate.actuator",
+                    ),
+                ),
             ],
         ),
     ]
