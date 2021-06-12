@@ -1,26 +1,26 @@
 .PHONY: run
 run:
-	cd freyr && python manage.py runserver 0.0.0.0:9000
+	cd ruta && python manage.py runserver 0.0.0.0:9000
 
 .PHONY: migrations
 migrations:
-	cd freyr && python manage.py makemigrations
+	cd ruta && python manage.py makemigrations
 
 .PHONY: migrate
 migrate:
-	cd freyr && python manage.py migrate
+	cd ruta && python manage.py migrate
 
 .PHONY: migrate
 createsuperuser:
-	cd freyr && python manage.py createsuperuser
+	cd ruta && python manage.py createsuperuser
 
 .PHONY: test
 test:
-	cd freyr && python manage.py test irrigate
+	cd ruta && python manage.py test irrigate
 
 .PHONY: shell
 shell:
-	cd freyr && python manage.py shell
+	cd ruta && python manage.py shell
 
 .PHONY: install
 install:
@@ -28,9 +28,9 @@ install:
 
 .PHONY: run_scheduled_jobs
 run_scheduled_jobs:
-	cd freyr && python manage.py run_scheduled_jobs
+	cd ruta && python manage.py run_scheduled_jobs
 
 .PHONY: run_scheduled_jobs
 stop_all:
-	cd freyr && python manage.py stop_all
+	cd ruta && python manage.py stop_all
 
