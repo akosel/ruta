@@ -1,10 +1,10 @@
 # ruta
-Simple rasperry pi controller for irrigation system
+Simple irrigation controller software for running on a raspberry pi
 
 
 # Requirements
 
-- Raspberry pi 3 or 4 running Ubuntu 21.04
+- Raspberry pi 3 or 4 running Ubuntu 21.04. In reality, any single-board computer with GPIO pins should work. For the wiring side, I followed this [hackster tutorial](https://www.hackster.io/Ryan33/raspberry-pi-web-page-based-sprinkler-controller-00d26f). Please be cautious when working with electricity. 
 - Python >= 3.8
 
 # Install
