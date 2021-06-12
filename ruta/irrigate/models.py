@@ -71,7 +71,7 @@ class Actuator(models.Model):
         data = get_forecasted_weather(days=days)
         return sum(
             [
-                day["day"]["totalprecip_in"] * (decay_factor ^ i)
+                day["day"]["totalprecip_in"] * (decay_factor ** i)
                 for i, day in enumerate(data["forecast"]["forecastday"])
             ]
         )

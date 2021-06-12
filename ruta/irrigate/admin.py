@@ -25,12 +25,24 @@ class ActuatorAdmin(admin.ModelAdmin):
         "next_run_duration_in_minutes",
         "temperature_multiplier",
         "todays_high_temperature",
+        "next_1_days_precipitation",
         "last_1_days_precipitation",
         "last_3_days_precipitation",
+        "next_3_days_precipitation",
         "last_7_days_precipitation",
     ]
 
     actions = [start, stop]
+
+    def next_3_days_precipitation(self, actuator):
+        days = 3
+        from_rain = actuator.get_forecasted_precipitation_from_rain_in_inches(days=days)
+        return f"{from_rain:.2f}"
+
+    def next_1_days_precipitation(self, actuator):
+        days = 1
+        from_rain = actuator.get_forecasted_precipitation_from_rain_in_inches(days=days)
+        return f"{from_rain:.2f}"
 
     def last_1_days_precipitation(self, actuator):
         days_ago = 1
