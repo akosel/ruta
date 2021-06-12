@@ -30,7 +30,7 @@ install:
 run_scheduled_jobs:
 	cd ruta && python manage.py run_scheduled_jobs
 
-.PHONY: run_scheduled_jobs
+.PHONY: stop_all
 stop_all:
 	cd ruta && python manage.py stop_all
 

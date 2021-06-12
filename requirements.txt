@@ -1,0 +1,6 @@
+black==21.6b0
+Django==3.2.4
+freezegun==1.1.0
+gunicorn==20.1.0
+lgpio==0.1.0.1
+requests==2.25.1
