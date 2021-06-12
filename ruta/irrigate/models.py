@@ -98,9 +98,12 @@ class Actuator(models.Model):
         baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
         rain_amount = self.get_precipitation_from_rain_in_inches(days_ago=3)
         sprinkler_amount = self.get_recent_water_amount_in_inches(days_ago=3)
+        forecasted_rain_amount = self.get_forecasted_precipitation_from_rain_in_inches(
+            days=2
+        )
 
         rolling_weekly_shortfall = required_inches_of_water_per_week - (
-            rain_amount + sprinkler_amount
+            rain_amount + sprinkler_amount + forecasted_rain_amount
         )
         logger.info(
             f"Rain amount: {rain_amount} - Sprinkler amount: {sprinkler_amount} - Baseline duration - {baseline_duration} - Shortfall: {rolling_weekly_shortfall}"

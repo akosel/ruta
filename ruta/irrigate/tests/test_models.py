@@ -10,11 +10,15 @@ class ActuatorTests(TestCase):
     def setUp(self):
         device = Device.objects.create(name="device")
         self.actuator = Actuator.objects.create(name="test", gpio_pin=5, device=device)
+        self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
+        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
+        self.actuator.get_forecasted_precipitation_from_rain_in_inches = Mock(
+            return_value=0
+        )
 
     def test_get_duration_in_seconds(self):
         self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0.67)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
-        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
         duration_in_seconds = self.actuator.get_duration_in_seconds()
         self.assertEqual(
             duration_in_seconds, ((1 - 0.67) / self.actuator.flow_rate_per_minute) * 60
@@ -23,7 +27,6 @@ class ActuatorTests(TestCase):
     def test_get_duration_in_seconds_skip_watering(self):
         self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0.9)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
-        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
         duration_in_seconds = self.actuator.get_duration_in_seconds()
         self.assertEqual(duration_in_seconds, 0)
 
@@ -31,6 +34,9 @@ class ActuatorTests(TestCase):
         self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
+        self.actuator.get_forecasted_precipitation_from_rain_in_inches = Mock(
+            return_value=0
+        )
         duration_in_seconds = self.actuator.get_duration_in_seconds()
         self.assertEqual(
             duration_in_seconds,
