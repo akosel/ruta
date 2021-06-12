@@ -1,6 +1,8 @@
 # ruta
 Simple irrigation controller software for running on a single-board computer with GPIO pins (such as a raspberry pi)
 
+![image](https://user-images.githubusercontent.com/5097634/121789516-9a602780-cba4-11eb-8d0d-7ca85b22de75.png)
+
 
 # Requirements
 
