@@ -8,6 +8,7 @@ Simple irrigation controller software for running on a single-board computer wit
 - A 5V Relay Module with Optocoupler Isolation. You'll need enough channels to support all of your zones. 
 - 2 female-to-female jumper wires for the ground and 5V connection to the relay
 - `N` female-to-female jumper wires for connecting the irrigation zone wires, where `N` is the the total number of zones you have.
+- A power supply that works with your irrigation system. Mine was 24V.
 - Python >= 3.8 (I believe this is the default version on Ubuntu 21.04, so you may not need to do anything here)
 
 For the wiring side, I followed this [hackster tutorial](https://www.hackster.io/Ryan33/raspberry-pi-web-page-based-sprinkler-controller-00d26f) mostly. Please be cautious when working with electricity. 
