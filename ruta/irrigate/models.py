@@ -114,6 +114,8 @@ class Actuator(models.Model):
         """
         Total minutes of watering needed per week
         """
+        if not self.flow_rate_per_minute:
+            return 0
         return self.base_inches_per_week / self.flow_rate_per_minute
 
     @property
@@ -121,7 +123,10 @@ class Actuator(models.Model):
         """
         Number of minutes to run per day
         """
-        return self.total_duration_in_minutes_per_week / self.get_number_of_scheduled_times()
+        count = self.get_number_of_scheduled_times()
+        if count:
+            return self.total_duration_in_minutes_per_week / count
+        return 0
 
     def get_number_of_scheduled_times(self):
         """
