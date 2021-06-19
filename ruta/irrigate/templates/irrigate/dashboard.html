@@ -1,0 +1,32 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="{% static 'irrigate/css/base.css' %}">
+		<link rel="stylesheet" type="text/css" href="{% static 'irrigate/css/dashboard.css' %}">
+	</head>
+
+	<body>
+		<div class="l-content run-table">
+			<h1>Recent sprinkler runs</h1>
+		<div class="pure-g">
+			{% if runs %}
+			{% for run in runs %}
+			<div class="pure-u-1-4"><p>{{ run.actuator.name }}</p></div>
+			<div class="pure-u-1-4"><p>{{ run.start_time }}</p></div>
+			<div class="pure-u-1-4"><p>{{ run.duration_in_minutes }} minutes</p></div>
+			<div class="pure-u-1-4"><p>{{ run.status }}</p></div>
+			{% endfor %}
+			{% else %}
+			<div class="pure-u-1-1"><p>No runs available</div>
+			{% endif %}
+		</div>
+		</div>
+	</body>
+			<script>
+				console.log('hello world');
+			</script>
+</html>

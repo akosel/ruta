@@ -10,6 +10,10 @@ migrations:
 migrate:
 	cd ruta && python manage.py migrate
 
+.PHONY: collectstatic
+collectstatic:
+	cd ruta && python manage.py collectstatic
+
 .PHONY: migrate
 createsuperuser:
 	cd ruta && python manage.py createsuperuser

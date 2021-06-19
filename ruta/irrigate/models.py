@@ -256,8 +256,12 @@ class ScheduleTime(models.Model):
 
 
 class ActuatorRunLog(models.Model):
+    class Meta:
+        ordering = ("-start_datetime",)
+
     RUNNING = "running"
     FINISHED = "finished"
+    SKIPPED = "skipped"
 
     actuator = models.ForeignKey(Actuator, on_delete=models.CASCADE)
     schedule_time = models.ForeignKey(
@@ -275,6 +279,17 @@ class ActuatorRunLog(models.Model):
 
     @property
     def status(self):
+        if self.duration_in_minutes == 0:
+            return self.SKIPPED
         if not self.end_datetime:
             return self.RUNNING
         return self.FINISHED
+
+    @property
+    def start_time(self):
+        return self.start_datetime.time()
+
+    @property
+    def duration_in_minutes(self):
+        end_datetime = self.end_datetime or timeznoe.now()
+        return round((end_datetime - self.start_datetime).seconds / 60, 2)
