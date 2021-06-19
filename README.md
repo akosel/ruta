@@ -1,10 +1,12 @@
 # ruta
 Simple irrigation controller software for running on a single-board computer with GPIO pins (such as a raspberry pi)
 
+![image](https://user-images.githubusercontent.com/5097634/121789516-9a602780-cba4-11eb-8d0d-7ca85b22de75.png)
+
 
 # Requirements
 
-- Single-board computer with GPIO pins running Ubuntu 21.04. Personally, I used a raspberry pi 3.
+- Single-board computer with GPIO pins running Ubuntu 21.04. Technically, any distro with [Linux kernel >= 5.11 should work](https://ubuntu.com/tutorials/gpio-on-raspberry-pi#1-overview), but I only tested against Ubuntu 21.04. 
 - A 5V Relay Module with Optocoupler Isolation. You'll need enough channels to support all of your zones. 
 - 2 female-to-female jumper wires for the ground and 5V connection to the relay
 - `N` female-to-female jumper wires for connecting the irrigation zone wires, where `N` is the the total number of zones you have.
