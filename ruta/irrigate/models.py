@@ -255,6 +255,7 @@ class ScheduleTime(models.Model):
     weekday = models.IntegerField(choices=Weekday.choices)
     actuators = models.ManyToManyField(Actuator)
     run_type = models.IntegerField(choices=RunType.choices, default=RunType.RECURRING)
+    duration_in_minutes = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.Weekday(self.weekday).name} - {self.start_time} - {list(self.actuators.all())}"

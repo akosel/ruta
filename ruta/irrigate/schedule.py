@@ -15,7 +15,10 @@ def _run(
     schedule_time: Optional[ScheduleTime] = None,
     dry_run: bool = False,
 ) -> int:
-    duration_in_seconds = actuator.get_duration_in_seconds()
+    if schedule_time.duration_in_minutes:
+        duration_in_seconds = schedule_time.duration_in_minutes * 60
+    else:
+        duration_in_seconds = actuator.get_duration_in_seconds()
     if not dry_run:
         actuator.start(schedule_time=schedule_time)
         time.sleep(duration_in_seconds)
@@ -42,7 +45,9 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
     weekday = now.weekday()
     hour = now.time()
     schedule_times = ScheduleTime.objects.filter(
-        weekday=weekday, start_time__lte=hour, run_type=ScheduleTime.RunType.RECURRING
+        weekday=weekday,
+        start_time__lte=hour,
+        run_type=ScheduleTime.RunType.RECURRING,
     )
     verb = "running" if not dry_run else "simulating"
     logger.info(f"Scheduled times: {schedule_times}")
