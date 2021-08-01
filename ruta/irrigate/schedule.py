@@ -41,7 +41,9 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
     now = timezone.now()
     weekday = now.weekday()
     hour = now.time()
-    schedule_times = ScheduleTime.objects.filter(weekday=weekday, start_time__lte=hour)
+    schedule_times = ScheduleTime.objects.filter(
+        weekday=weekday, start_time__lte=hour, run_type=ScheduleTime.RunType.RECURRING
+    )
     verb = "running" if not dry_run else "simulating"
     logger.info(f"Scheduled times: {schedule_times}")
     actuators_that_ran = []
