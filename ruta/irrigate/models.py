@@ -200,6 +200,7 @@ class Actuator(models.Model):
                     start_time=datetime.now().time(),
                     weekday=datetime.now().weekday(),
                 )
+                schedule_time.actuators.add(self)
             ActuatorRunLog.objects.create(
                 actuator=self,
                 start_datetime=timezone.now(),
@@ -295,5 +296,5 @@ class ActuatorRunLog(models.Model):
 
     @property
     def duration_in_minutes(self):
-        end_datetime = self.end_datetime or timeznoe.now()
+        end_datetime = self.end_datetime or timezone.now()
         return round((end_datetime - self.start_datetime).seconds / 60, 2)
