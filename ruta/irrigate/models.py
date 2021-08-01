@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 from django.db import models, transaction
@@ -194,12 +194,17 @@ class Actuator(models.Model):
         """
         with GPIO(self.gpio_pin) as gpio:
             gpio.start()
-            if schedule_time:
-                ActuatorRunLog.objects.create(
-                    actuator=self,
-                    start_datetime=timezone.now(),
-                    schedule_time=schedule_time,
+            if not schedule_time:
+                schedule_time = ScheduleTime.objects.create(
+                    run_type=ScheduleTime.RunType.ONE_OFF,
+                    start_time=datetime.now().time(),
+                    weekday=datetime.now().weekday(),
                 )
+            ActuatorRunLog.objects.create(
+                actuator=self,
+                start_datetime=timezone.now(),
+                schedule_time=schedule_time,
+            )
 
     @transaction.atomic
     def stop(
@@ -212,19 +217,13 @@ class Actuator(models.Model):
         """
         with GPIO(self.gpio_pin) as gpio:
             gpio.stop()
-            if schedule_time:
-                try:
-                    current_run = ActuatorRunLog.objects.get(
-                        actuator=self,
-                        end_datetime__isnull=True,
-                        schedule_time=schedule_time,
-                    )
-                except ActuatorRunLog.DoesNotExist:
-                    logger.warn(
-                        f"Unable to find matching run log for {self} at scheduled time {schedule_time}"
-                    )
-                    return
+            current_runs = ActuatorRunLog.objects.filter(
+                actuator=self,
+                end_datetime__isnull=True,
+            )
 
+            # stopping clears any runs that haven't been ended
+            for current_run in current_runs:
                 end_datetime = (
                     timezone.now()
                     if not duration_in_seconds
@@ -247,9 +246,14 @@ class ScheduleTime(models.Model):
         SATURDAY = 5
         SUNDAY = 6
 
+    class RunType(models.IntegerChoices):
+        RECURRING = 0
+        ONE_OFF = 1
+
     start_time = models.TimeField()
     weekday = models.IntegerField(choices=Weekday.choices)
     actuators = models.ManyToManyField(Actuator)
+    run_type = models.IntegerField(choices=RunType.choices, default=RunType.RECURRING)
 
     def __str__(self):
         return f"{self.Weekday(self.weekday).name} - {self.start_time} - {list(self.actuators.all())}"
