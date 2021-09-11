@@ -29,10 +29,18 @@ def _run(
 
 
 def has_run(schedule_time: ScheduleTime, actuator: Actuator):
-    now = timezone.now().date()
-    return ActuatorRunLog.objects.filter(
-        schedule_time=schedule_time, actuator=actuator, start_datetime__date=now
-    ).exists()
+    runs = ActuatorRunLog.objects.filter(
+        schedule_time=schedule_time,
+        actuator=actuator,
+    )
+
+    # for one-offs, we only run them once ever, but for recurring we run them
+    # once per week
+    if schedule_time.run_type == ScheduleTime.RunType.RECURRING:
+        now = timezone.now().date()
+        runs = runs.filter(start_datetime__date=now)
+
+    return runs.exists()
 
 
 def run_all(dry_run: bool = False) -> List[Actuator]:
@@ -47,7 +55,6 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
     schedule_times = ScheduleTime.objects.filter(
         weekday=weekday,
         start_time__lte=hour,
-        run_type=ScheduleTime.RunType.RECURRING,
     )
     verb = "running" if not dry_run else "simulating"
     logger.info(f"Scheduled times: {schedule_times}")
