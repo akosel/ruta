@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.utils.translation import gettext_lazy as _
 
 from irrigate.models import Actuator, ActuatorRunLog, Device, ScheduleTime
 
@@ -75,10 +76,44 @@ class ActuatorAdmin(admin.ModelAdmin):
         return actuator.get_temperature_watering_adjustment_multiplier()
 
 
+class RunTypeListFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = _("Run Type")
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = "run_type"
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        return (
+            (ScheduleTime.RunType.ONE_OFF.name, _(ScheduleTime.RunType.ONE_OFF.name)),
+            (
+                ScheduleTime.RunType.RECURRING.name,
+                _(ScheduleTime.RunType.RECURRING.name),
+            ),
+        )
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        value = self.value()
+        if value:
+            return queryset.filter(run_type=ScheduleTime.RunType[self.value()])
+        return queryset
+
+
 class ScheduleTimeAdmin(admin.ModelAdmin):
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.filter(run_type=ScheduleTime.RunType.RECURRING)
+    list_filter = (RunTypeListFilter,)
 
 
 admin.site.register(Actuator, ActuatorAdmin)
