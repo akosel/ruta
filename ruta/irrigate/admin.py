@@ -75,7 +75,13 @@ class ActuatorAdmin(admin.ModelAdmin):
         return actuator.get_temperature_watering_adjustment_multiplier()
 
 
+class ScheduleTimeAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(run_type=ScheduleTime.RunType.RECURRING)
+
+
 admin.site.register(Actuator, ActuatorAdmin)
 admin.site.register(ActuatorRunLog)
 admin.site.register(Device)
-admin.site.register(ScheduleTime)
+admin.site.register(ScheduleTime, ScheduleTimeAdmin)
