@@ -67,7 +67,7 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
                 )
                 continue
             event = MonitoringEvent(
-                name=f"Starting run for {schedule_time}",
+                name=f"Starting run for {actuator} - dry_run: {dry_run}",
                 status=MonitoringEventStatus.IN_PROGRESS,
             )
             emit(event)
@@ -75,6 +75,11 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
             if not dry_run:
                 logger.info(f"{verb} actuator {actuator}")
                 seconds_run = _run(actuator, schedule_time=schedule_time)
+                minutes_run = seconds_run / 60
+                event = MonitoringEvent(
+                    name=f"Ran {actuator} for {minutes_run}",
+                    status=MonitoringEventStatus.IN_PROGRESS,
+                )
                 if seconds_run:
                     logger.info(
                         f"Finished {verb} actuator {actuator} for {seconds_run} second(s)"
