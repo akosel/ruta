@@ -166,9 +166,11 @@ class Actuator(models.Model):
 
     def get_number_of_scheduled_times(self):
         """
-        Get the number of times the actuator is scheduled to run
+        Get the number of times the actuator is scheduled to run.
+
+        Only consider recurring runs.
         """
-        return self.scheduletime_set.all().count()
+        return self.scheduletime_set.filter(run_type=ScheduleTime.RunType.RECURRING).count()
 
     def get_recent_water_amount_in_inches(self, days_ago=7):
         now = timezone.now()
