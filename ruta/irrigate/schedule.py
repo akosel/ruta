@@ -53,6 +53,7 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
     weekday = now.weekday()
     hour = now.time()
     schedule_times = ScheduleTime.objects.filter(
+        enabled=True,
         weekday=weekday,
         start_time__lte=hour,
     )

@@ -253,6 +253,7 @@ class ScheduleTime(models.Model):
         RECURRING = 0
         ONE_OFF = 1
 
+    enabled = models.BooleanField(default=True)
     start_time = models.TimeField()
     weekday = models.IntegerField(choices=Weekday.choices)
     actuators = models.ManyToManyField(Actuator)
