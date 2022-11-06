@@ -112,8 +112,23 @@ class RunTypeListFilter(admin.SimpleListFilter):
         return queryset
 
 
+@admin.action(description="Enable schedule time")
+def enable(modeladmin, request, queryset):
+    for schedule_time in queryset:
+        schedule_time.enabled = True
+        schedule_time.save()
+
+
+@admin.action(description="Disable schedule time")
+def disable(modeladmin, request, queryset):
+    for schedule_time in queryset:
+        schedule_time.enabled = False
+        schedule_time.save()
+
+
 class ScheduleTimeAdmin(admin.ModelAdmin):
     list_filter = (RunTypeListFilter,)
+    actions = [enable, disable]
 
 
 admin.site.register(Actuator, ActuatorAdmin)

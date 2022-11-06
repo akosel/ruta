@@ -170,7 +170,9 @@ class Actuator(models.Model):
 
         Only consider recurring runs.
         """
-        return self.scheduletime_set.filter(run_type=ScheduleTime.RunType.RECURRING).count()
+        return self.scheduletime_set.filter(
+            run_type=ScheduleTime.RunType.RECURRING
+        ).count()
 
     def get_recent_water_amount_in_inches(self, days_ago=7):
         now = timezone.now()
@@ -261,7 +263,7 @@ class ScheduleTime(models.Model):
     duration_in_minutes = models.FloatField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.Weekday(self.weekday).name} - {self.start_time} - {list(self.actuators.all())}"
+        return f"[{'Enabled' if self.enabled else 'Disabled'}] {self.Weekday(self.weekday).name} - {self.start_time} - {list(self.actuators.all())}"
 
 
 class ActuatorRunLog(models.Model):

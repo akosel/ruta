@@ -24,7 +24,7 @@ class Command(BaseCommand):
             return
         if actuators_that_ran:
             event = MonitoringEvent(
-                    name=f"Scheduled time complete for sprinklers: {actuators_that_ran}",
+                name=f"Scheduled time complete for sprinklers: {actuators_that_ran}",
                 status=MonitoringEventStatus.SUCCESS,
             )
             emit(event)
