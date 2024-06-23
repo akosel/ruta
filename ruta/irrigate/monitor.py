@@ -24,9 +24,9 @@ class MonitoringEvent:
 
 
 def emit(event_data: MonitoringEvent):
-    try: 
+    try:
         response = requests.post(BASE_URL, data=asdict(event_data))
     except Exception as e:
-        print('Error making request', e)
+        print("Error making request", e)
         return None
     return response

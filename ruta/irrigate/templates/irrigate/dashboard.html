@@ -12,21 +12,32 @@
 	<body>
 		<div class="l-content run-table">
 			<h1>Recent sprinkler runs</h1>
-		<div class="pure-g">
+
+
 			{% if runs %}
-			{% for run in runs %}
-			<div class="pure-u-1-4"><p>{{ run.actuator.name }}</p></div>
-			<div class="pure-u-1-4"><p>{{ run.start_time }}</p></div>
-			<div class="pure-u-1-4"><p>{{ run.duration_in_minutes }} minutes</p></div>
-			<div class="pure-u-1-4"><p>{{ run.status }}</p></div>
-			{% endfor %}
+			<table class="pure-table pure-table-bordered">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Time</th>
+						<th>Duration</th>
+						<th>Status</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for run in runs %}
+					<tr>
+						<td>{{ run.actuator.name }}</td>
+						<td>{{ run.start_datetime }}</td>
+						<td>{{ run.duration_in_minutes }}</td>
+						<td>{{ run.status }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
 			{% else %}
 			<div class="pure-u-1-1"><p>No runs available</div>
 			{% endif %}
 		</div>
-		</div>
 	</body>
-			<script>
-				console.log('hello world');
-			</script>
 </html>

@@ -10,4 +10,4 @@ class DashboardView(generic.ListView):
     context_object_name = "runs"
 
     def get_queryset(self):
-        return ActuatorRunLog.objects.all()
+        return ActuatorRunLog.objects.all()[:100]
