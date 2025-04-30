@@ -51,27 +51,18 @@ def has_run(schedule_time: ScheduleTime, actuator: Actuator):
     return runs.exists()
 
 
-def has_grass_seed_run_recently(actuator: Actuator):
+def has_run_recently(actuator: Actuator):
     """
-    Check if an actuator has run in grass seed mode within the current hour window
+    Check if an actuator has run at all within the current hour window
     """
     now = timezone.now()
     start_of_current_window = now.replace(minute=0, second=0, microsecond=0)
     
     # Check for any runs within the current hour window
-    recent_runs = ActuatorRunLog.objects.filter(
+    return ActuatorRunLog.objects.filter(
         actuator=actuator,
-        start_datetime__gte=start_of_current_window,
-        end_datetime__isnull=False
-    )
-    
-    # If we have any recent runs that lasted about 1 minute, consider it a grass seed run
-    for run in recent_runs:
-        duration_seconds = (run.end_datetime - run.start_datetime).total_seconds()
-        if abs(duration_seconds - GRASS_SEED_DURATION_SECONDS) < 5:  # Allow for small timing variations
-            return True
-    
-    return False
+        start_datetime__gte=start_of_current_window
+    ).exists()
 
 
 def run_all(dry_run: bool = False) -> List[Actuator]:
@@ -133,8 +124,8 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
         
         for actuator in grass_seed_actuators:
             # Check if it has already run during this hour window
-            if has_grass_seed_run_recently(actuator):
-                logger.info(f"Actuator {actuator} has already run in grass seed mode this hour")
+            if has_run_recently(actuator):
+                logger.info(f"Actuator {actuator} has already run in this hour window, skipping grass seed mode")
                 continue
                 
             # Create a temporary schedule time for logging purposes
