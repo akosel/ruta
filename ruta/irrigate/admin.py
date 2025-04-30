@@ -22,6 +22,7 @@ class ActuatorAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "gpio_pin",
+        "grass_seed_mode",
         "calculated_duration_in_minutes",
         "next_run_duration_in_minutes",
         "temperature_multiplier",
@@ -32,6 +33,8 @@ class ActuatorAdmin(admin.ModelAdmin):
         "next_3_days_precipitation",
         "last_7_days_precipitation",
     ]
+
+    list_editable = ["grass_seed_mode"]
 
     actions = [start, stop]
 

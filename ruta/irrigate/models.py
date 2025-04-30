@@ -45,6 +45,10 @@ class Actuator(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
     flow_rate_per_minute = models.FloatField(default=0.025)
     base_inches_per_week = models.FloatField(default=1)
+    grass_seed_mode = models.BooleanField(
+        default=False,
+        help_text="When enabled, turns on for 1 minute every 5 hours daily"
+    )
 
     def __str__(self):
         return f"{self.name} - {self.gpio_pin}"
