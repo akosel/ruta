@@ -11,8 +11,9 @@ from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
 logger = logging.getLogger(__name__)
 
 # Constants for grass seed mode
-GRASS_SEED_DURATION_SECONDS = 60  # 1 minute
-GRASS_SEED_INTERVAL_HOURS = 5     # Every 5 hours
+GRASS_SEED_DURATION_SECONDS = 300  # 5 minutes
+GRASS_SEED_MORNING_HOUR = 10  # 6 AM ET
+GRASS_SEED_EVENING_HOUR = 22  # 6 PM ET
 
 
 def _run(
@@ -57,11 +58,10 @@ def has_run_recently(actuator: Actuator):
     """
     now = timezone.now()
     start_of_current_window = now.replace(minute=0, second=0, microsecond=0)
-    
+
     # Check for any runs within the current hour window
     return ActuatorRunLog.objects.filter(
-        actuator=actuator,
-        start_datetime__gte=start_of_current_window
+        actuator=actuator, start_datetime__gte=start_of_current_window
     ).exists()
 
 
@@ -75,7 +75,7 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
     now = timezone.now()
     weekday = now.weekday()
     hour = now.time()
-    
+
     # Regular scheduled runs
     schedule_times = ScheduleTime.objects.filter(
         enabled=True,
@@ -85,7 +85,7 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
     verb = "running" if not dry_run else "simulating"
     logger.info(f"Scheduled times: {schedule_times}")
     actuators_that_ran = []
-    
+
     # First run the regularly scheduled actuators
     for schedule_time in schedule_times:
         for actuator in schedule_time.actuators.all():
@@ -116,18 +116,25 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
                     logger.info(f"Skipped {verb} actuator {actuator}")
             actuators_that_ran.append(actuator)
 
-    # Now handle grass seed mode actuators - they run every 5 hours for 1 minute
+    # Now handle grass seed mode actuators - they run twice daily for 5 minutes
     current_hour = now.hour
-    if current_hour % GRASS_SEED_INTERVAL_HOURS == 0:  # Run at hours 0, 5, 10, 15, 20
+    if current_hour in [
+        GRASS_SEED_MORNING_HOUR,
+        GRASS_SEED_EVENING_HOUR,
+    ]:  # Run at 6 AM and 6 PM
         grass_seed_actuators = Actuator.objects.filter(grass_seed_mode=True)
-        logger.info(f"Found {grass_seed_actuators.count()} actuators in grass seed mode")
-        
+        logger.info(
+            f"Found {grass_seed_actuators.count()} actuators in grass seed mode"
+        )
+
         for actuator in grass_seed_actuators:
             # Check if it has already run during this hour window
             if has_run_recently(actuator):
-                logger.info(f"Actuator {actuator} has already run in this hour window, skipping grass seed mode")
+                logger.info(
+                    f"Actuator {actuator} has already run in this hour window, skipping grass seed mode"
+                )
                 continue
-                
+
             # Create a temporary schedule time for logging purposes
             schedule_time = ScheduleTime.objects.create(
                 run_type=ScheduleTime.RunType.ONE_OFF,
@@ -136,19 +143,19 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
                 duration_in_minutes=GRASS_SEED_DURATION_SECONDS / 60,
             )
             schedule_time.actuators.add(actuator)
-            
+
             event = MonitoringEvent(
                 name=f"Starting grass seed mode run for {actuator} - dry_run: {dry_run}",
                 status=MonitoringEventStatus.IN_PROGRESS,
             )
             emit(event)
-            
+
             if not dry_run:
                 logger.info(f"{verb} actuator {actuator} in grass seed mode")
                 seconds_run = _run(
-                    actuator, 
+                    actuator,
                     schedule_time=schedule_time,
-                    duration_override=GRASS_SEED_DURATION_SECONDS
+                    duration_override=GRASS_SEED_DURATION_SECONDS,
                 )
                 event = MonitoringEvent(
                     name=f"Ran {actuator} in grass seed mode",
@@ -157,7 +164,7 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
                 emit(event)
                 logger.info(f"Finished {verb} actuator {actuator} in grass seed mode")
             actuators_that_ran.append(actuator)
-    
+
     return actuators_that_ran
 
 
