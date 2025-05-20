@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Constants for grass seed mode
 GRASS_SEED_DURATION_SECONDS = 300  # 5 minutes
 GRASS_SEED_MORNING_HOUR = 10  # 6 AM ET
-GRASS_SEED_EVENING_HOUR = 22  # 6 PM ET
+GRASS_SEED_EVENING_HOUR = 24  # 8 PM ET
 
 
 def _run(
