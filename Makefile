@@ -39,5 +39,5 @@ stop_all:
 	cd ruta && python manage.py stop_all
 
 .PHONY: codeformat
-codeformat:
+format:
 	cd ruta && black .

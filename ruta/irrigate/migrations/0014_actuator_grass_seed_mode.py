@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('irrigate', '0013_scheduletime_enabled'),
+        ("irrigate", "0013_scheduletime_enabled"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='actuator',
-            name='grass_seed_mode',
-            field=models.BooleanField(default=False, help_text='When enabled, turns on for 1 minute every 5 hours daily'),
+            model_name="actuator",
+            name="grass_seed_mode",
+            field=models.BooleanField(
+                default=False,
+                help_text="When enabled, turns on for 1 minute every 5 hours daily",
+            ),
         ),
     ]

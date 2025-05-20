@@ -47,7 +47,7 @@ class Actuator(models.Model):
     base_inches_per_week = models.FloatField(default=1)
     grass_seed_mode = models.BooleanField(
         default=False,
-        help_text="When enabled, turns on for 1 minute every 5 hours daily"
+        help_text="When enabled, turns on for 1 minute every 5 hours daily",
     )
 
     def __str__(self):
@@ -75,7 +75,7 @@ class Actuator(models.Model):
         data = get_forecasted_weather(days=days)
         return sum(
             [
-                day["day"]["totalprecip_in"] * (decay_factor ** i)
+                day["day"]["totalprecip_in"] * (decay_factor**i)
                 for i, day in enumerate(data["forecast"]["forecastday"])
             ]
         )
