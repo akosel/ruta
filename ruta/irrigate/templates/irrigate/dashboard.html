@@ -250,11 +250,24 @@
 									{% endfor %}
 								</td>
 								<td>
-									{% if schedule.duration_in_minutes %}
-									{{ schedule.duration_in_minutes|floatformat:"-2" }} min
-									{% else %}
-									Calculated
-									{% endif %}
+									<div class="duration-detail-list">
+										{% for detail in schedule.duration_details %}
+										<div class="duration-detail">
+											<strong>
+												{{ detail.actuator.name }}:
+												{% if schedule.duration_in_minutes %}
+												{{ schedule.duration_in_minutes|floatformat:"-2" }} min
+												{% else %}
+												{{ detail.summary.final_duration_in_minutes|floatformat:"-2" }} min
+												{% endif %}
+											</strong>
+											{% if detail.summary %}
+											<span>Rain {{ detail.summary.recent_rain_inches|floatformat:"2" }} in · Sprinklers {{ detail.summary.recent_sprinkler_minutes|floatformat:"-2" }} min · Forecast {{ detail.summary.forecasted_rain_inches|floatformat:"2" }} in</span>
+											<span class="duration-reason">{{ detail.summary.reason }}</span>
+											{% endif %}
+										</div>
+										{% endfor %}
+									</div>
 								</td>
 							</tr>
 							{% endfor %}

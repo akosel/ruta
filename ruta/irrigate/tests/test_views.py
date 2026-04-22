@@ -1,4 +1,6 @@
 from datetime import datetime, time, timedelta
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -69,7 +71,20 @@ class DashboardTests(TestCase):
             name="Front Yard", gpio_pin=5, device=self.device
         )
 
-    def test_dashboard_includes_schedule_queue_and_paginated_runs(self):
+    def duration_summary(self):
+        return SimpleNamespace(
+            final_duration_in_minutes=14,
+            recent_rain_inches=0.25,
+            recent_sprinkler_minutes=18,
+            forecasted_rain_inches=0.1,
+            reason="Calculated",
+        )
+
+    @patch("irrigate.models.Actuator.get_duration_summary")
+    def test_dashboard_includes_schedule_queue_and_paginated_runs(
+        self, mock_get_duration_summary
+    ):
+        mock_get_duration_summary.return_value = self.duration_summary()
         recurring_schedule = ScheduleTime.objects.create(
             run_type=ScheduleTime.RunType.RECURRING,
             weekday=ScheduleTime.Weekday.MONDAY,
@@ -126,8 +141,12 @@ class DashboardTests(TestCase):
 
         self.assertEqual(list(response.context["queued_one_offs"]), [])
 
+    @patch("irrigate.models.Actuator.get_duration_summary")
     @freeze_time("2021-05-31 09:55:00+00:00")
-    def test_dashboard_includes_browser_timezone_datetime_markup(self):
+    def test_dashboard_includes_browser_timezone_datetime_markup(
+        self, mock_get_duration_summary
+    ):
+        mock_get_duration_summary.return_value = self.duration_summary()
         recurring_schedule = ScheduleTime.objects.create(
             run_type=ScheduleTime.RunType.RECURRING,
             weekday=ScheduleTime.Weekday.MONDAY,
@@ -152,6 +171,55 @@ class DashboardTests(TestCase):
         self.assertContains(response, 'data-dashboard-format="datetime"')
         self.assertContains(response, 'data-dashboard-format="weekday"')
         self.assertContains(response, 'data-dashboard-format="time"')
+
+    @patch("irrigate.models.Actuator.get_duration_summary")
+    def test_dashboard_includes_calculated_duration_details(
+        self, mock_get_duration_summary
+    ):
+        mock_get_duration_summary.return_value = self.duration_summary()
+        recurring_schedule = ScheduleTime.objects.create(
+            run_type=ScheduleTime.RunType.RECURRING,
+            weekday=ScheduleTime.Weekday.MONDAY,
+            start_time=time(6, 0),
+        )
+        recurring_schedule.actuators.add(self.actuator)
+
+        response = self.client.get(reverse("dashboard"))
+
+        schedule = response.context["recurring_schedules"][0]
+        self.assertEqual(
+            schedule.duration_details,
+            [
+                {
+                    "actuator": self.actuator,
+                    "summary": mock_get_duration_summary.return_value,
+                }
+            ],
+        )
+        self.assertContains(response, "Front Yard:")
+        self.assertContains(response, "14 min")
+        self.assertContains(response, "Rain 0.25 in")
+        self.assertContains(response, "Sprinklers 18 min")
+        self.assertContains(response, "Forecast 0.10 in")
+        self.assertContains(response, "Calculated")
+
+    @patch("irrigate.models.Actuator.get_duration_summary")
+    def test_dashboard_uses_explicit_recurring_duration_when_set(
+        self, mock_get_duration_summary
+    ):
+        recurring_schedule = ScheduleTime.objects.create(
+            run_type=ScheduleTime.RunType.RECURRING,
+            weekday=ScheduleTime.Weekday.MONDAY,
+            start_time=time(6, 0),
+            duration_in_minutes=10,
+        )
+        recurring_schedule.actuators.add(self.actuator)
+
+        response = self.client.get(reverse("dashboard"))
+
+        mock_get_duration_summary.assert_not_called()
+        self.assertContains(response, "10 min")
+        self.assertNotContains(response, "Rain 0.25 in")
 
     @freeze_time("2021-05-31 09:55:00+00:00")
     def test_dashboard_includes_grass_seed_mode_details(self):

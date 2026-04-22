@@ -58,6 +58,23 @@ class DashboardView(LoginRequiredMixin, generic.ListView):
                 future=True,
             )
         actuators = list(Actuator.objects.select_related("device").order_by("name"))
+        duration_summaries = {}
+        for schedule_time in recurring_schedules:
+            schedule_time.duration_details = []
+            for actuator in schedule_time.actuators.all():
+                summary = None
+                if not schedule_time.duration_in_minutes:
+                    if actuator.id not in duration_summaries:
+                        duration_summaries[
+                            actuator.id
+                        ] = actuator.get_duration_summary()
+                    summary = duration_summaries[actuator.id]
+                schedule_time.duration_details.append(
+                    {
+                        "actuator": actuator,
+                        "summary": summary,
+                    }
+                )
 
         context.update(
             {

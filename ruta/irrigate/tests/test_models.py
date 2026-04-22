@@ -20,7 +20,9 @@ class ActuatorTests(TestCase):
         )
 
     def test_get_duration_in_seconds(self):
-        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0.67)
+        self.actuator.get_recent_water_duration_in_minutes = Mock(
+            return_value=0.67 / self.actuator.flow_rate_per_minute
+        )
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         duration_in_seconds = self.actuator.get_duration_in_seconds()
         self.assertEqual(
@@ -28,13 +30,15 @@ class ActuatorTests(TestCase):
         )
 
     def test_get_duration_in_seconds_skip_watering(self):
-        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0.9)
+        self.actuator.get_recent_water_duration_in_minutes = Mock(
+            return_value=0.9 / self.actuator.flow_rate_per_minute
+        )
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         duration_in_seconds = self.actuator.get_duration_in_seconds()
         self.assertEqual(duration_in_seconds, 0)
 
     def test_get_duration_in_seconds_respect_baseline(self):
-        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0)
+        self.actuator.get_recent_water_duration_in_minutes = Mock(return_value=0)
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0)
         self.actuator.get_forecasted_precipitation_from_rain_in_inches = Mock(
@@ -47,7 +51,9 @@ class ActuatorTests(TestCase):
         )
 
     def test_get_duration_in_seconds_account_for_rain(self):
-        self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0.42)
+        self.actuator.get_recent_water_duration_in_minutes = Mock(
+            return_value=0.42 / self.actuator.flow_rate_per_minute
+        )
         self.actuator.get_number_of_scheduled_times = Mock(return_value=3)
         self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0.25)
         duration_in_seconds = self.actuator.get_duration_in_seconds()
@@ -55,6 +61,39 @@ class ActuatorTests(TestCase):
             round(duration_in_seconds),
             round(((1 - 0.67) / self.actuator.flow_rate_per_minute) * 60),
         )
+
+    def test_get_duration_summary_exposes_calculation_inputs(self):
+        sprinkler_inches = 0.67
+        self.actuator.get_recent_water_duration_in_minutes = Mock(
+            return_value=sprinkler_inches / self.actuator.flow_rate_per_minute
+        )
+        self.actuator.get_precipitation_from_rain_in_inches = Mock(return_value=0.25)
+
+        summary = self.actuator.get_duration_summary()
+
+        self.assertEqual(summary.recent_rain_inches, 0.25)
+        self.assertEqual(summary.recent_sprinkler_inches, sprinkler_inches)
+        self.assertEqual(
+            summary.recent_sprinkler_minutes,
+            sprinkler_inches / self.actuator.flow_rate_per_minute,
+        )
+        self.assertEqual(summary.forecasted_rain_inches, 0)
+        self.assertEqual(summary.final_duration_seconds, 0)
+        self.assertEqual(summary.reason, "Skipped")
+
+    def test_get_recent_water_duration_in_minutes(self):
+        for i in range(3):
+            start_datetime = timezone.now() - timedelta(days=i + 1)
+            end_datetime = start_datetime + timedelta(minutes=12)
+            ActuatorRunLog.objects.create(
+                actuator=self.actuator,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+            )
+
+        minutes = self.actuator.get_recent_water_duration_in_minutes(days_ago=7)
+
+        self.assertEqual(minutes, 12 * 3)
 
     def test_get_recent_water_amount_in_inches(self):
         for i in range(3):

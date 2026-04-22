@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -18,6 +19,24 @@ from irrigate.weather import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class DurationSummary:
+    recent_rain_inches: float
+    recent_sprinkler_minutes: float
+    recent_sprinkler_inches: float
+    forecasted_rain_inches: float
+    baseline_duration_seconds: float
+    base_duration_seconds: float
+    temperature_multiplier: float
+    calculated_duration_seconds: float
+    final_duration_seconds: float
+    reason: str
+
+    @property
+    def final_duration_in_minutes(self):
+        return self.final_duration_seconds / 60
 
 
 class Device(models.Model):
@@ -115,6 +134,63 @@ class Actuator(models.Model):
 
         return (rolling_weekly_shortfall / self.flow_rate_per_minute) * 60
 
+    def get_duration_summary(self) -> DurationSummary:
+        required_inches_of_water_per_week = self.base_inches_per_week
+        baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
+        rain_amount = self.get_precipitation_from_rain_in_inches(days_ago=3)
+        sprinkler_minutes = self.get_recent_water_duration_in_minutes(days_ago=3)
+        sprinkler_amount = sprinkler_minutes * self.flow_rate_per_minute
+        forecasted_rain_amount = self.get_forecasted_precipitation_from_rain_in_inches(
+            days=2
+        )
+
+        rolling_weekly_shortfall = required_inches_of_water_per_week - (
+            rain_amount + sprinkler_amount + forecasted_rain_amount
+        )
+        logger.info(
+            f"Rain amount: {rain_amount} - Sprinkler amount: {sprinkler_amount} - Baseline duration - {baseline_duration} - Shortfall: {rolling_weekly_shortfall}"
+        )
+
+        base_duration_in_seconds = (
+            rolling_weekly_shortfall / self.flow_rate_per_minute
+        ) * 60
+        temperature_multiplier = self.get_temperature_watering_adjustment_multiplier()
+        logger.info(
+            f"Base duration is {base_duration_in_seconds} and temperature multipler is {temperature_multiplier}"
+        )
+
+        calculated_duration_in_seconds = (
+            base_duration_in_seconds * temperature_multiplier
+        )
+
+        if calculated_duration_in_seconds < SKIP_WATERING_THRESHOLD_IN_SECONDS:
+            final_duration_in_seconds = 0
+            reason = "Skipped"
+        else:
+            final_duration_in_seconds = min(
+                max(calculated_duration_in_seconds, MINIMUM_WATER_DURATION_IN_SECONDS),
+                baseline_duration,
+            )
+            if final_duration_in_seconds == MINIMUM_WATER_DURATION_IN_SECONDS:
+                reason = "Minimum applied"
+            elif final_duration_in_seconds == baseline_duration:
+                reason = "Capped at baseline"
+            else:
+                reason = "Calculated"
+
+        return DurationSummary(
+            recent_rain_inches=rain_amount,
+            recent_sprinkler_minutes=sprinkler_minutes,
+            recent_sprinkler_inches=sprinkler_amount,
+            forecasted_rain_inches=forecasted_rain_amount,
+            baseline_duration_seconds=baseline_duration,
+            base_duration_seconds=base_duration_in_seconds,
+            temperature_multiplier=temperature_multiplier,
+            calculated_duration_seconds=calculated_duration_in_seconds,
+            final_duration_seconds=final_duration_in_seconds,
+            reason=reason,
+        )
+
     def get_duration_in_seconds(self) -> int:
         """
         Calculate the total time the sprinkler needs to run to get the desired amount
@@ -127,27 +203,7 @@ class Actuator(models.Model):
         boundaries.
         """
 
-        base_duration_in_seconds = self._get_base_duration_in_seconds()
-        temperature_multiplier = self.get_temperature_watering_adjustment_multiplier()
-        logger.info(
-            f"Base duration is {base_duration_in_seconds} and temperature multipler is {temperature_multiplier}"
-        )
-
-        calculated_duration_in_seconds = (
-            base_duration_in_seconds * temperature_multiplier
-        )
-
-        if calculated_duration_in_seconds < SKIP_WATERING_THRESHOLD_IN_SECONDS:
-            return 0
-
-        # never water less than the minimum duration or more than the baseline duration
-        baseline_duration = self.duration_in_minutes_per_scheduled_day * 60
-        duration_in_seconds = min(
-            max(calculated_duration_in_seconds, MINIMUM_WATER_DURATION_IN_SECONDS),
-            baseline_duration,
-        )
-
-        return duration_in_seconds
+        return self.get_duration_summary().final_duration_seconds
 
     @property
     def total_duration_in_minutes_per_week(self):
@@ -178,7 +234,7 @@ class Actuator(models.Model):
             run_type=ScheduleTime.RunType.RECURRING
         ).count()
 
-    def get_recent_water_amount_in_inches(self, days_ago=7):
+    def get_recent_water_duration_in_minutes(self, days_ago=7):
         now = timezone.now()
         start_datetime = now - timedelta(days=days_ago)
         recent_runs = ActuatorRunLog.objects.filter(
@@ -193,7 +249,13 @@ class Actuator(models.Model):
                 continue
             total_minutes += (run.end_datetime - run.start_datetime).seconds / 60
 
-        return total_minutes * self.flow_rate_per_minute
+        return total_minutes
+
+    def get_recent_water_amount_in_inches(self, days_ago=7):
+        return (
+            self.get_recent_water_duration_in_minutes(days_ago=days_ago)
+            * self.flow_rate_per_minute
+        )
 
     @transaction.atomic
     def start(self, schedule_time: Optional["ScheduleTime"] = None):
