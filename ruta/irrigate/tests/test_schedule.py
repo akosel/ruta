@@ -5,7 +5,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from irrigate.models import Actuator, ActuatorRunLog, Device, ScheduleTime
-from irrigate.schedule import run_all
+from irrigate.schedule import GRASS_SEED_DURATION_SECONDS, run_all
 
 
 class ScheduleTests(TestCase):
@@ -76,3 +76,20 @@ class ScheduleTests(TestCase):
     def test_run_all_no_times(self, mock_run):
         run_all()
         mock_run.assert_not_called()
+
+    @patch("irrigate.schedule.emit")
+    @patch("irrigate.schedule._run")
+    def test_run_all_grass_seed_mode_runs_at_evening_hour(self, mock_run, mock_emit):
+        mock_run.return_value = GRASS_SEED_DURATION_SECONDS
+        self.actuator.grass_seed_mode = True
+        self.actuator.save()
+
+        with freeze_time("2021-06-01 00:01:00+00:00"):
+            actuators_that_ran = run_all()
+
+        self.assertEqual(actuators_that_ran, [self.actuator])
+        mock_run.assert_called_once_with(
+            self.actuator,
+            schedule_time=ScheduleTime.objects.get(),
+            duration_override=GRASS_SEED_DURATION_SECONDS,
+        )
