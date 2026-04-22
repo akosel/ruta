@@ -5,42 +5,247 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Ruta Dashboard</title>
 		<link rel="stylesheet" type="text/css" href="{% static 'irrigate/css/base.css' %}">
 		<link rel="stylesheet" type="text/css" href="{% static 'irrigate/css/dashboard.css' %}">
 	</head>
 
 	<body>
-		<div class="l-content run-table">
+		<main class="dashboard-shell">
 			<header class="dashboard-header">
-				<h1>Recent sprinkler runs</h1>
-				<a class="logout-link" href="{% url 'logout' %}">Log out</a>
+				<div>
+					<p class="eyebrow">Irrigation Control</p>
+					<h1>Sprinklers</h1>
+				</div>
+				<nav class="header-actions" aria-label="Dashboard links">
+					<a class="secondary-link" href="{% url 'admin:index' %}">Admin</a>
+					<a class="secondary-link" href="{% url 'logout' %}">Log out</a>
+				</nav>
 			</header>
 
-
-			{% if runs %}
-			<table class="pure-table pure-table-bordered">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Time</th>
-						<th>Duration</th>
-						<th>Status</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for run in runs %}
-					<tr>
-						<td>{{ run.actuator.name }}</td>
-						<td>{{ run.start_datetime }}</td>
-						<td>{{ run.duration_in_minutes }}</td>
-						<td>{{ run.status }}</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-			{% else %}
-			<div class="pure-u-1-1"><p>No runs available</div>
+			{% if messages %}
+			<div class="messages" role="status">
+				{% for message in messages %}
+				<p class="message message-{{ message.tags }}">{{ message }}</p>
+				{% endfor %}
+			</div>
 			{% endif %}
-		</div>
+
+			<section class="summary-grid" aria-label="Sprinkler summary">
+				<article class="summary-card">
+					<span class="summary-label">Running now</span>
+					<strong>{{ running_runs|length }}</strong>
+					<span>
+						{% if running_runs %}
+						{% for run in running_runs %}{{ run.actuator.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+						{% else %}
+						No active zones
+						{% endif %}
+					</span>
+				</article>
+				<article class="summary-card">
+					<span class="summary-label">Queued one-offs</span>
+					<strong>{{ queued_one_offs|length }}</strong>
+					<span>Waiting for the scheduler</span>
+				</article>
+				<article class="summary-card">
+					<span class="summary-label">Next recurring</span>
+					<strong>
+						{% if next_recurring_schedule %}
+						{{ next_recurring_schedule.get_weekday_display }}
+						{% else %}
+						None
+						{% endif %}
+					</strong>
+					<span>
+						{% if next_recurring_schedule %}
+						{{ next_recurring_schedule.start_time|time:"g:i A" }}
+						{% else %}
+						No enabled schedule
+						{% endif %}
+					</span>
+				</article>
+				<article class="summary-card">
+					<span class="summary-label">Recent activity</span>
+					<strong>
+						{% if recent_run %}
+						{{ recent_run.actuator.name }}
+						{% else %}
+						None
+						{% endif %}
+					</strong>
+					<span>
+						{% if recent_run %}
+						{{ recent_run.start_datetime|date:"M j, g:i A" }}
+						{% else %}
+						No runs logged
+						{% endif %}
+					</span>
+				</article>
+			</section>
+
+			<section class="dashboard-tool" aria-labelledby="one-off-title">
+				<div>
+					<p class="eyebrow">Manual run</p>
+					<h2 id="one-off-title">Queue a one-off run</h2>
+				</div>
+				<form class="one-off-form" action="{% url 'one_off_run' %}" method="post">
+					{% csrf_token %}
+					<label>
+						<span>Zone</span>
+						{{ one_off_form.actuator }}
+					</label>
+					<label>
+						<span>Minutes</span>
+						{{ one_off_form.duration_in_minutes }}
+					</label>
+					<button type="submit">Queue run</button>
+				</form>
+			</section>
+
+			<section class="dashboard-section" aria-labelledby="queued-title">
+				<div class="section-heading">
+					<div>
+						<p class="eyebrow">Manual queue</p>
+						<h2 id="queued-title">Queued one-off runs</h2>
+					</div>
+				</div>
+
+				{% if queued_one_offs %}
+				<div class="table-wrap">
+					<table class="dashboard-table">
+						<thead>
+							<tr>
+								<th>Zone</th>
+								<th>Queued for</th>
+								<th>Created</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for schedule in queued_one_offs %}
+							<tr>
+								<td>
+									{% for actuator in schedule.actuators.all %}
+									{{ actuator.name }}{% if not forloop.last %}, {% endif %}
+									{% endfor %}
+								</td>
+								<td>{{ schedule.duration_in_minutes|floatformat:"-2" }} min</td>
+								<td>{{ schedule.get_weekday_display }} at {{ schedule.start_time|time:"g:i A" }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<p class="empty-state">No one-off runs are queued.</p>
+				{% endif %}
+			</section>
+
+			<section class="dashboard-section" aria-labelledby="schedule-title">
+				<div class="section-heading">
+					<div>
+						<p class="eyebrow">Recurring</p>
+						<h2 id="schedule-title">Schedule</h2>
+					</div>
+				</div>
+
+				{% if recurring_schedules %}
+				<div class="table-wrap">
+					<table class="dashboard-table">
+						<thead>
+							<tr>
+								<th>Day</th>
+								<th>Time</th>
+								<th>Zones</th>
+								<th>Duration</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for schedule in recurring_schedules %}
+							<tr>
+								<td>{{ schedule.get_weekday_display }}</td>
+								<td>{{ schedule.start_time|time:"g:i A" }}</td>
+								<td>
+									{% for actuator in schedule.actuators.all %}
+									{{ actuator.name }}{% if not forloop.last %}, {% endif %}
+									{% endfor %}
+								</td>
+								<td>
+									{% if schedule.duration_in_minutes %}
+									{{ schedule.duration_in_minutes|floatformat:"-2" }} min
+									{% else %}
+									Calculated
+									{% endif %}
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<p class="empty-state">No enabled recurring schedules.</p>
+				{% endif %}
+			</section>
+
+			<section class="dashboard-section" aria-labelledby="runs-title">
+				<div class="section-heading">
+					<div>
+						<p class="eyebrow">History</p>
+						<h2 id="runs-title">Recent runs</h2>
+					</div>
+				</div>
+
+				{% if runs %}
+				<div class="table-wrap">
+					<table class="dashboard-table">
+						<thead>
+							<tr>
+								<th>Zone</th>
+								<th>Run type</th>
+								<th>Started</th>
+								<th>Duration</th>
+								<th>Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for run in runs %}
+							<tr>
+								<td>{{ run.actuator.name }}</td>
+								<td>
+									{% if run.schedule_time %}
+									{{ run.schedule_time.get_run_type_display }}
+									{% else %}
+									Manual
+									{% endif %}
+								</td>
+								<td>{{ run.start_datetime|date:"M j, g:i A" }}</td>
+								<td>{{ run.duration_in_minutes|floatformat:"-2" }} min</td>
+								<td><span class="status-badge status-{{ run.status }}">{{ run.status }}</span></td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+
+				{% if is_paginated %}
+				<nav class="pagination" aria-label="Recent run pages">
+					{% if page_obj.has_previous %}
+					<a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+					{% else %}
+					<span>Previous</span>
+					{% endif %}
+					<strong>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</strong>
+					{% if page_obj.has_next %}
+					<a href="?page={{ page_obj.next_page_number }}">Next</a>
+					{% else %}
+					<span>Next</span>
+					{% endif %}
+				</nav>
+				{% endif %}
+				{% else %}
+				<p class="empty-state">No runs available.</p>
+				{% endif %}
+			</section>
+		</main>
 	</body>
 </html>

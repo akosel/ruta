@@ -15,6 +15,9 @@ class ActuatorTests(TestCase):
         self.actuator.get_forecasted_precipitation_from_rain_in_inches = Mock(
             return_value=0
         )
+        self.actuator.get_temperature_watering_adjustment_multiplier = Mock(
+            return_value=1
+        )
 
     def test_get_duration_in_seconds(self):
         self.actuator.get_recent_water_amount_in_inches = Mock(return_value=0.67)
