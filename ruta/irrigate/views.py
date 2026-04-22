@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views import generic
 
 from irrigate.forms import OneOffRunForm
-from irrigate.models import ActuatorRunLog, ScheduleTime
+from irrigate.models import Actuator, ActuatorRunLog, ScheduleTime
+from irrigate.schedule import GRASS_SEED_DURATION_SECONDS, GRASS_SEED_RUN_HOURS
 
 
 class DashboardView(LoginRequiredMixin, generic.ListView):
@@ -56,13 +57,20 @@ class DashboardView(LoginRequiredMixin, generic.ListView):
                 now=now,
                 future=True,
             )
+        actuators = list(Actuator.objects.select_related("device").order_by("name"))
 
         context.update(
             {
+                "actuators": actuators,
                 "one_off_form": OneOffRunForm(),
                 "running_runs": running_runs,
                 "queued_one_offs": queued_one_offs,
                 "recurring_schedules": recurring_schedules,
+                "grass_seed_enabled_count": sum(
+                    1 for actuator in actuators if actuator.grass_seed_mode
+                ),
+                "grass_seed_run_datetimes": self._get_grass_seed_run_datetimes(now),
+                "grass_seed_duration_in_minutes": GRASS_SEED_DURATION_SECONDS / 60,
                 "recent_run": ActuatorRunLog.objects.select_related(
                     "actuator", "schedule_time"
                 ).first(),
@@ -89,6 +97,16 @@ class DashboardView(LoginRequiredMixin, generic.ListView):
         if not future and scheduled_datetime > now:
             return scheduled_datetime - timedelta(days=7)
         return scheduled_datetime
+
+    def _get_grass_seed_run_datetimes(self, now):
+        run_datetimes = []
+        for hour in GRASS_SEED_RUN_HOURS:
+            run_datetime = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+            if run_datetime <= now:
+                run_datetime += timedelta(days=1)
+            run_datetimes.append(run_datetime)
+
+        return sorted(run_datetimes)
 
     def _get_next_recurring_schedule(self, recurring_schedules):
         if not recurring_schedules:
@@ -131,4 +149,19 @@ class OneOffRunView(LoginRequiredMixin, generic.View):
                 for error in errors:
                     messages.error(request, error)
 
+        return redirect("dashboard")
+
+
+class GrassSeedModeToggleView(LoginRequiredMixin, generic.View):
+    http_method_names = ["post"]
+
+    def post(self, request, *args, **kwargs):
+        actuator = get_object_or_404(Actuator, pk=kwargs["pk"])
+        actuator.grass_seed_mode = request.POST.get("enabled") == "true"
+        actuator.save(update_fields=["grass_seed_mode"])
+
+        status_label = "enabled" if actuator.grass_seed_mode else "disabled"
+        messages.success(
+            request, f"Grass seed mode {status_label} for {actuator.name}."
+        )
         return redirect("dashboard")

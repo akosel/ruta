@@ -50,6 +50,17 @@
 					<span>Waiting for the scheduler</span>
 				</article>
 				<article class="summary-card">
+					<span class="summary-label">Grass seed mode</span>
+					<strong>{{ grass_seed_enabled_count }}</strong>
+					<span>
+						{% if grass_seed_enabled_count == 1 %}
+						Zone enabled
+						{% else %}
+						Zones enabled
+						{% endif %}
+					</span>
+				</article>
+				<article class="summary-card">
 					<span class="summary-label">Next recurring</span>
 					<strong>
 						{% if next_recurring_schedule %}
@@ -102,6 +113,73 @@
 					</label>
 					<button type="submit">Queue run</button>
 				</form>
+			</section>
+
+			<section class="dashboard-section" aria-labelledby="grass-seed-title">
+				<div class="section-heading">
+					<div>
+						<p class="eyebrow">Growth mode</p>
+						<h2 id="grass-seed-title">Grass seed mode</h2>
+					</div>
+					<p class="section-meta">
+						{% for run_datetime in grass_seed_run_datetimes %}
+						<time datetime="{{ run_datetime|date:"c" }}" data-dashboard-format="weekday-time">{{ run_datetime|date:"l, g:i A" }}</time>{% if not forloop.last %} · {% endif %}
+						{% endfor %}
+						for {{ grass_seed_duration_in_minutes|floatformat:"-2" }} min
+					</p>
+				</div>
+
+				{% if actuators %}
+				<div class="table-wrap">
+					<table class="dashboard-table">
+						<thead>
+							<tr>
+								<th>Zone</th>
+								<th>Status</th>
+								<th>Next runs</th>
+								<th>Duration</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for actuator in actuators %}
+							<tr>
+								<td>{{ actuator.name }}</td>
+								<td>
+									{% if actuator.grass_seed_mode %}
+									<span class="status-badge status-enabled">Enabled</span>
+									{% else %}
+									<span class="status-badge status-disabled">Off</span>
+									{% endif %}
+								</td>
+								<td>
+									<div class="run-window-list">
+										{% for run_datetime in grass_seed_run_datetimes %}
+										<time datetime="{{ run_datetime|date:"c" }}" data-dashboard-format="weekday-time">{{ run_datetime|date:"l, g:i A" }}</time>
+										{% endfor %}
+									</div>
+								</td>
+								<td>{{ grass_seed_duration_in_minutes|floatformat:"-2" }} min</td>
+								<td>
+									<form class="inline-action-form" action="{% url 'grass_seed_mode_toggle' actuator.id %}" method="post">
+										{% csrf_token %}
+										{% if actuator.grass_seed_mode %}
+										<input type="hidden" name="enabled" value="false">
+										<button class="toggle-button toggle-button-secondary" type="submit">Turn off</button>
+										{% else %}
+										<input type="hidden" name="enabled" value="true">
+										<button class="toggle-button" type="submit">Turn on</button>
+										{% endif %}
+									</form>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<p class="empty-state">No zones are configured.</p>
+				{% endif %}
 			</section>
 
 			<section class="dashboard-section" aria-labelledby="queued-title">

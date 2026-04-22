@@ -24,6 +24,16 @@ class DashboardAuthTests(TestCase):
             response, f"{reverse('login')}?next={reverse('one_off_run')}"
         )
 
+    def test_grass_seed_mode_toggle_requires_login(self):
+        response = self.client.post(
+            reverse("grass_seed_mode_toggle", args=[1]), {"enabled": "true"}
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('grass_seed_mode_toggle', args=[1])}",
+        )
+
     def test_dashboard_renders_for_authenticated_user(self):
         user = get_user_model().objects.create_user(
             username="ruta", password="correct-password"
@@ -142,6 +152,55 @@ class DashboardTests(TestCase):
         self.assertContains(response, 'data-dashboard-format="datetime"')
         self.assertContains(response, 'data-dashboard-format="weekday"')
         self.assertContains(response, 'data-dashboard-format="time"')
+
+    @freeze_time("2021-05-31 09:55:00+00:00")
+    def test_dashboard_includes_grass_seed_mode_details(self):
+        grass_seed_actuator = Actuator.objects.create(
+            name="Back Yard",
+            gpio_pin=6,
+            device=self.device,
+            grass_seed_mode=True,
+        )
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(
+            list(response.context["actuators"]), [grass_seed_actuator, self.actuator]
+        )
+        self.assertEqual(response.context["grass_seed_enabled_count"], 1)
+        self.assertEqual(response.context["grass_seed_duration_in_minutes"], 5)
+        self.assertEqual(
+            [
+                run_datetime.isoformat()
+                for run_datetime in response.context["grass_seed_run_datetimes"]
+            ],
+            ["2021-05-31T10:00:00+00:00", "2021-06-01T00:00:00+00:00"],
+        )
+        self.assertContains(response, "Grass seed mode")
+        self.assertContains(response, "Back Yard")
+        self.assertContains(response, "Front Yard")
+        self.assertContains(response, "Turn off")
+        self.assertContains(response, "Turn on")
+        self.assertContains(response, 'data-dashboard-format="weekday-time"')
+
+    def test_grass_seed_mode_toggle_updates_actuator(self):
+        response = self.client.post(
+            reverse("grass_seed_mode_toggle", args=[self.actuator.id]),
+            {"enabled": "true"},
+        )
+
+        self.assertRedirects(response, reverse("dashboard"))
+        self.actuator.refresh_from_db()
+        self.assertTrue(self.actuator.grass_seed_mode)
+
+        response = self.client.post(
+            reverse("grass_seed_mode_toggle", args=[self.actuator.id]),
+            {"enabled": "false"},
+        )
+
+        self.assertRedirects(response, reverse("dashboard"))
+        self.actuator.refresh_from_db()
+        self.assertFalse(self.actuator.grass_seed_mode)
 
     def test_one_off_run_post_creates_queued_schedule(self):
         response = self.client.post(

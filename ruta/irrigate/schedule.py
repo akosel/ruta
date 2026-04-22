@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Constants for grass seed mode
 GRASS_SEED_DURATION_SECONDS = 300  # 5 minutes
-GRASS_SEED_MORNING_HOUR = 10  # 6 AM ET
-GRASS_SEED_EVENING_HOUR = 24  # 8 PM ET
+GRASS_SEED_MORNING_HOUR = 10
+GRASS_SEED_EVENING_HOUR = 0
+GRASS_SEED_RUN_HOURS = (GRASS_SEED_MORNING_HOUR, GRASS_SEED_EVENING_HOUR)
 
 
 def _run(
@@ -118,10 +119,7 @@ def run_all(dry_run: bool = False) -> List[Actuator]:
 
     # Now handle grass seed mode actuators - they run twice daily for 5 minutes
     current_hour = now.hour
-    if current_hour in [
-        GRASS_SEED_MORNING_HOUR,
-        GRASS_SEED_EVENING_HOUR,
-    ]:  # Run at 6 AM and 6 PM
+    if current_hour in GRASS_SEED_RUN_HOURS:
         grass_seed_actuators = Actuator.objects.filter(grass_seed_mode=True)
         logger.info(
             f"Found {grass_seed_actuators.count()} actuators in grass seed mode"
