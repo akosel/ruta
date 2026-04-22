@@ -1,9 +1,10 @@
-from datetime import time, timedelta
+from datetime import datetime, time, timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from freezegun import freeze_time
 
 from irrigate.models import Actuator, ActuatorRunLog, Device, ScheduleTime
 
@@ -114,6 +115,33 @@ class DashboardTests(TestCase):
         response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(list(response.context["queued_one_offs"]), [])
+
+    @freeze_time("2021-05-31 09:55:00+00:00")
+    def test_dashboard_includes_browser_timezone_datetime_markup(self):
+        recurring_schedule = ScheduleTime.objects.create(
+            run_type=ScheduleTime.RunType.RECURRING,
+            weekday=ScheduleTime.Weekday.MONDAY,
+            start_time=time(10, 0),
+        )
+        recurring_schedule.actuators.add(self.actuator)
+        start_datetime = timezone.make_aware(datetime(2021, 5, 31, 10, 30))
+        ActuatorRunLog.objects.create(
+            actuator=self.actuator,
+            start_datetime=start_datetime,
+            end_datetime=start_datetime + timedelta(minutes=5),
+        )
+
+        response = self.client.get(reverse("dashboard"))
+
+        schedule = response.context["recurring_schedules"][0]
+        self.assertEqual(
+            schedule.dashboard_datetime.isoformat(), "2021-05-31T10:00:00+00:00"
+        )
+        self.assertContains(response, "irrigate/js/dashboard.js")
+        self.assertContains(response, 'datetime="2021-05-31T10:30:00+00:00"')
+        self.assertContains(response, 'data-dashboard-format="datetime"')
+        self.assertContains(response, 'data-dashboard-format="weekday"')
+        self.assertContains(response, 'data-dashboard-format="time"')
 
     def test_one_off_run_post_creates_queued_schedule(self):
         response = self.client.post(
