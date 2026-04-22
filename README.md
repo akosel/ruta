@@ -30,6 +30,13 @@ make run
 ```
 
 Starts a server on port 9000. The admin console is at <your_local_pi_ip_address>:9000/admin. 
+The `make run` target enables Django debug mode so static assets are served locally by the development server.
+
+The dashboard now requires a Django username and password. Use the admin account created during `./bootstrap.sh`, or create one with:
+
+```
+make createsuperuser
+```
 
 You can configure the webserver to run properly using something like systemd. 
 

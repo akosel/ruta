@@ -1,4 +1,27 @@
 .run-table {
 	max-width: 980px;
 	margin: 0 auto;
+	padding: 0 16px;
+}
+
+.dashboard-header {
+	align-items: center;
+	display: flex;
+	gap: 16px;
+	justify-content: space-between;
+}
+
+.logout-link {
+	border: 1px solid #c6d0dc;
+	border-radius: 4px;
+	color: #1a5b7a;
+	padding: 8px 12px;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.logout-link:hover,
+.logout-link:focus {
+	background: #edf6f9;
+	border-color: #7fb0c3;
 }

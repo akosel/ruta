@@ -1,11 +1,10 @@
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import generic
 
 from irrigate.models import ActuatorRunLog
 
 
-class DashboardView(generic.ListView):
+class DashboardView(LoginRequiredMixin, generic.ListView):
     template_name = "irrigate/dashboard.html"
     context_object_name = "runs"
 

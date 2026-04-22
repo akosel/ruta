@@ -1,6 +1,6 @@
 .PHONY: run
 run:
-	cd ruta && python manage.py runserver 0.0.0.0:9000
+	cd ruta && RUTA_DEBUG=1 python manage.py runserver 0.0.0.0:9000
 
 .PHONY: migrations
 migrations:

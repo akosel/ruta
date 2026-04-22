@@ -1,0 +1,40 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Ruta Login</title>
+		<link rel="stylesheet" type="text/css" href="{% static 'irrigate/css/base.css' %}">
+		<link rel="stylesheet" type="text/css" href="{% static 'irrigate/css/login.css' %}">
+	</head>
+
+	<body class="login-page">
+		<main class="login-shell">
+			<section class="login-panel" aria-labelledby="login-title">
+				<div class="login-brand">
+					<p>Ruta</p>
+					<h1 id="login-title">Sign in</h1>
+				</div>
+
+				{% if form.errors %}
+				<p class="login-error">Username or password is incorrect.</p>
+				{% endif %}
+
+				<form class="login-form" method="post" action="{% url 'login' %}">
+					{% csrf_token %}
+					<input type="hidden" name="next" value="{{ next }}">
+
+					<label for="{{ form.username.id_for_label }}">Username</label>
+					{{ form.username }}
+
+					<label for="{{ form.password.id_for_label }}">Password</label>
+					{{ form.password }}
+
+					<button type="submit">Sign in</button>
+				</form>
+			</section>
+		</main>
+	</body>
+</html>

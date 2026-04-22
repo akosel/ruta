@@ -11,7 +11,10 @@
 
 	<body>
 		<div class="l-content run-table">
-			<h1>Recent sprinkler runs</h1>
+			<header class="dashboard-header">
+				<h1>Recent sprinkler runs</h1>
+				<a class="logout-link" href="{% url 'logout' %}">Log out</a>
+			</header>
 
 
 			{% if runs %}
