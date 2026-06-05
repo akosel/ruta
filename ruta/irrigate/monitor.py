@@ -1,13 +1,16 @@
+import logging
 from enum import Enum
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Optional
 
 import requests
 from django.conf import settings
 from django.utils import timezone
 
 BASE_URL = settings.MONITORING_WEBHOOK_URL
+REQUEST_TIMEOUT = (5, 15)
+
+logger = logging.getLogger(__name__)
 
 
 class MonitoringEventStatus(Enum):
@@ -25,8 +28,12 @@ class MonitoringEvent:
 
 def emit(event_data: MonitoringEvent):
     try:
-        response = requests.post(BASE_URL, data=asdict(event_data))
+        response = requests.post(
+            BASE_URL,
+            data=asdict(event_data),
+            timeout=REQUEST_TIMEOUT,
+        )
     except Exception as e:
-        print("Error making request", e)
+        logger.warning("Error emitting monitoring event: %s", e)
         return None
     return response
