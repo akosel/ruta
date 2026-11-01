@@ -166,3 +166,8 @@ LOGGING = {
         },
     },
 }
+
+# Fingerprinted URLs prevent browsers reusing styles from older deployments.
+# Ordinary unit tests do not need a collected static directory.
+if not TEST:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
