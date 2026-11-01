@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for tested Ruta updates every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=1min
+RandomizedDelaySec=10
+
+[Install]
+WantedBy=timers.target

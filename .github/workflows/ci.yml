@@ -1,0 +1,40 @@
+name: Test and promote release
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ruta-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUTA_SECRET_KEY: ci-tests-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: sed '/^lgpio==/d' requirements.txt > /tmp/requirements-test.txt
+      - run: pip install -r /tmp/requirements-test.txt
+      - run: cd ruta && python manage.py test irrigate && python manage.py collectstatic --noinput --clear
+      - run: bash -n deploy/update.sh
+  promote:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Promote tested main commit
+        env:
+          TESTED_SHA: ${{ github.sha }}
+        run: |
+          latest=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$latest" != "$TESTED_SHA" ]; then exit 0; fi
+          git push --force origin HEAD:refs/heads/deploy-ready

@@ -1,0 +1,11 @@
+[Unit]
+Description=Deploy tested Ruta release
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/src/ruta
+ExecStart=/usr/local/lib/ruta/update.sh
+TimeoutStartSec=600

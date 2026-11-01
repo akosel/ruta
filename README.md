@@ -47,3 +47,36 @@ TODO
 # Sprinkler run configuration
 
 TODO
+
+# Production static files and automatic updates
+
+Edit assets in `ruta/irrigate/static/`. `ruta/ruta/static/` is generated output
+served by Nginx, and must not be committed. After updating code, run:
+
+```sh
+cd ruta
+python3 manage.py collectstatic --noinput --clear
+```
+
+GitHub Actions tests pushes to `main` and promotes successful commits to
+`deploy-ready`. The Pi's `ruta-update.timer` polls that branch every minute.
+It tests a staged copy, checks migrations, pauses scheduler launches, defers
+while a watering job runs, updates code, rebuilds static assets, reloads Gunicorn,
+and checks the login page and dashboard CSS. A failed health check restores the
+previous code and assets. Local source edits, dependency changes, and pending
+migrations block deployment for manual maintenance; the live SQLite database
+and service environment remain on the Pi.
+
+The supplied units target the existing installation at `/home/ubuntu/src/ruta`.
+Install `deploy/update.sh` as `/usr/local/lib/ruta/update.sh`, and the two units
+under `/etc/systemd/system/`. The `ubuntu` user needs GitHub read access,
+`freezegun` for staged tests, and passwordless permission to stop/start
+`ruta_scheduler.timer` and reload `ruta.service`. Enable with:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now ruta-update.timer
+journalctl -u ruta-update.service
+```
+
+Updater and unit changes require reinstalling these root-owned files separately.
