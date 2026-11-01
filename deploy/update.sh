@@ -39,8 +39,8 @@ if git ls-files ruta/ruta/static | read -r _; then
     git restore -- ruta/ruta/static
 fi
 apply_static() {
-    (cd ruta && python3 manage.py collectstatic --noinput --clear)
-    sudo -n systemctl reload ruta.service
+    (cd ruta && python3 manage.py collectstatic --noinput --clear) || return 1
+    sudo -n systemctl reload ruta.service || return 1
     for attempt in {1..15}; do
         if curl --fail --silent http://127.0.0.1:8000/login/ >/dev/null &&
            curl --fail --silent http://127.0.0.1:8000/static/irrigate/css/dashboard.css | grep -q dashboard-shell; then
